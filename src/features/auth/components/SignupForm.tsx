@@ -1,18 +1,18 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import {  Link } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { authService } from "../api/authService";
 import styles from "./AuthForm.module.css";
 
 export const SignupForm = () => {
-  const navigate = useNavigate();
   const [validationError, setValidationError] = useState("");
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const { mutate, isPending, error } = useMutation({
     mutationFn: authService.registerShop,
     onSuccess: () => {
-      navigate("/dashboard");
+      setIsSuccess(true);
     },
   });
 
@@ -37,6 +37,20 @@ export const SignupForm = () => {
       password,
     });
   };
+
+  if (isSuccess) {
+    return (
+      <div className={styles.container} style={{ textAlign: "center" }}>
+        <h2 className={styles.title} style={{ color: "var(--color-success)" }}>Registration Successful!</h2>
+        <p style={{ marginBottom: "2rem", color: "var(--color-slate-600)" }}>
+          We have sent a verification link to your email address. Please verify your email to activate your account.
+        </p>
+        <Link to="/login" className={styles.button} style={{ textDecoration: "none" }}>
+          Go to Login
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.container}>
@@ -78,6 +92,13 @@ export const SignupForm = () => {
           {isPending && <Loader2 className="animate-spin" size={20} />}
           {isPending ? "Creating Account..." : "Sign Up"}
         </button>
+
+        <p className={styles.text}>
+          Already have an account?{" "}
+          <Link to="/login" className={styles.link}>
+            Login
+          </Link>
+        </p>
       </form>
     </div>
   );
