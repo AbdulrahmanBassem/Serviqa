@@ -4,6 +4,7 @@ import { DashboardLayout } from "./layouts/DashboardLayout";
 import { LoginForm } from "./features/auth/components/LoginForm";
 import { SignupForm } from "./features/auth/components/SignupForm";
 import { Dashboard } from "./pages/Dashboard";
+import { Clients } from "./pages/Clients";
 
 function App() {
   return (
@@ -17,7 +18,7 @@ function App() {
             <Route path="/dashboard" element={<Dashboard />} />
             {/* Temporary placeholders for the sidebar links to prevent routing errors */}
             <Route path="/jobs" element={<div>Active Jobs Module Loading...</div>} />
-            <Route path="/clients" element={<div>Clients Module Loading...</div>} />
+            <Route path="/clients" element={<Clients />} />
             <Route path="/vehicles" element={<div>Vehicles Module Loading...</div>} />
             <Route path="/inventory" element={<div>Inventory Module Loading...</div>} />
           </Route>

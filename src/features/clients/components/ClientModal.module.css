@@ -1,0 +1,82 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+.modal {
+  background: white;
+  padding: 2rem;
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 500px;
+  box-shadow: var(--shadow-lg);
+}
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+.title {
+  font-size: var(--text-xl);
+  font-weight: var(--font-weight-bold);
+}
+.closeBtn {
+  background: none;
+  border: none;
+  color: var(--color-slate-400);
+  cursor: pointer;
+}
+.formGroup {
+  margin-bottom: 1rem;
+}
+.label {
+  display: block;
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-slate-700);
+  margin-bottom: 0.5rem;
+}
+.input {
+  width: 100%;
+  padding: 0.625rem;
+  border: 1px solid var(--color-slate-200);
+  border-radius: var(--radius-md);
+  font-family: inherit;
+}
+.input:focus {
+  outline: 2px solid var(--color-primary-100);
+  border-color: var(--color-primary-600);
+}
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+.cancelBtn {
+  padding: 0.625rem 1rem;
+  background: white;
+  border: 1px solid var(--color-slate-200);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+.submitBtn {
+  padding: 0.625rem 1rem;
+  background: var(--color-primary-600);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
