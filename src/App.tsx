@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ProtectedRoute } from "./components/common/ProtectedRoute";
+import { DashboardLayout } from "./layouts/DashboardLayout";
 import { LoginForm } from "./features/auth/components/LoginForm";
 import { SignupForm } from "./features/auth/components/SignupForm";
 import { Dashboard } from "./pages/Dashboard";
@@ -8,17 +9,20 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public Routes */}
         <Route path="/login" element={<LoginForm />} />
         <Route path="/signup" element={<SignupForm />} />
 
-        {/* Protected Routes */}
         <Route element={<ProtectedRoute />}>
-          <Route path="/dashboard" element={<Dashboard />} />
-          {/* Future protected routes (clients, inventory, jobs) will go here */}
+          <Route element={<DashboardLayout />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            {/* Temporary placeholders for the sidebar links to prevent routing errors */}
+            <Route path="/jobs" element={<div>Active Jobs Module Loading...</div>} />
+            <Route path="/clients" element={<div>Clients Module Loading...</div>} />
+            <Route path="/vehicles" element={<div>Vehicles Module Loading...</div>} />
+            <Route path="/inventory" element={<div>Inventory Module Loading...</div>} />
+          </Route>
         </Route>
 
-        {/* Fallback Route: Redirect any unknown URL to the dashboard (which will then redirect to login if unauthenticated) */}
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </BrowserRouter>
