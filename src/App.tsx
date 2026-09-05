@@ -8,6 +8,7 @@ import { Clients } from "./pages/Clients";
 import { Vehicles } from "./pages/Vehicles";
 import { Jobs } from "./pages/Jobs";
 import { Inventory } from "./pages/Inventory";
+import { AiAssistant } from "./pages/AiAssistant";
 
 function App() {
   return (
@@ -19,11 +20,11 @@ function App() {
         <Route element={<ProtectedRoute />}>
           <Route element={<DashboardLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
-            {/* Temporary placeholders for the sidebar links to prevent routing errors */}
             <Route path="/jobs" element={<Jobs />} />
             <Route path="/clients" element={<Clients />} />
             <Route path="/vehicles" element={<Vehicles />} />
             <Route path="/inventory" element={<Inventory />} />
+            <Route path="/ai-assistant" element={<AiAssistant />} />
           </Route>
         </Route>
 

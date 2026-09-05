@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { Wrench, LayoutDashboard, Kanban, Users, Car, Package, LogOut } from "lucide-react";
+import { Wrench, LayoutDashboard, Kanban, Users, Car, Package, LogOut, Bot } from "lucide-react";
 import { authService } from "../features/auth/api/authService";
 import styles from "./DashboardLayout.module.css";
 
@@ -9,6 +9,7 @@ const navItems = [
   { name: "Clients", path: "/clients", icon: Users },
   { name: "Vehicles", path: "/vehicles", icon: Car },
   { name: "Inventory", path: "/inventory", icon: Package },
+  { name: "AI Assistant", path: "/ai-assistant", icon: Bot }
 ];
 
 export const Sidebar = () => {

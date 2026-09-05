@@ -1,5 +1,5 @@
 import { useState } from "react";
-import {  Link } from "react-router-dom";
+import {  Link, useNavigate } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import { Loader2, Mail, Lock, User, Store, Phone, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { authService } from "../api/authService";
@@ -7,6 +7,7 @@ import { AuthLayout } from "./AuthLayout";
 import styles from "./AuthForm.module.css";
 
 export const SignupForm = () => {
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [validationError, setValidationError] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
@@ -38,22 +39,25 @@ export const SignupForm = () => {
     });
   };
 
+  // if (isSuccess) {
+  //   return (
+  //     <AuthLayout>
+  //       <div className={styles.formContainer} style={{ textAlign: "center" }}>
+  //         <div className={styles.header}>
+  //           <h2 className={styles.title} style={{ color: "var(--color-success)" }}>Registration Successful!</h2>
+  //           <p className={styles.subtitle}>
+  //             We have sent a verification link to your email address. Please verify your email to activate your account.
+  //           </p>
+  //         </div>
+  //         <Link to="/login" className={styles.button} style={{ textDecoration: "none" }}>
+  //           Return to Login
+  //         </Link>
+  //       </div>
+  //     </AuthLayout>
+  //   );
+  // }
   if (isSuccess) {
-    return (
-      <AuthLayout>
-        <div className={styles.formContainer} style={{ textAlign: "center" }}>
-          <div className={styles.header}>
-            <h2 className={styles.title} style={{ color: "var(--color-success)" }}>Registration Successful!</h2>
-            <p className={styles.subtitle}>
-              We have sent a verification link to your email address. Please verify your email to activate your account.
-            </p>
-          </div>
-          <Link to="/login" className={styles.button} style={{ textDecoration: "none" }}>
-            Return to Login
-          </Link>
-        </div>
-      </AuthLayout>
-    );
+    navigate("/login");
   }
 
   return (

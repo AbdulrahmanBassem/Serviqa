@@ -2,7 +2,7 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
-  sendEmailVerification,
+  // sendEmailVerification,
 } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { auth, db } from "../../../config/firebase";
@@ -15,7 +15,7 @@ export const authService = {
     const user = userCredential.user;
 
     // 2. Trigger the verification email
-    await sendEmailVerification(user);
+    // await sendEmailVerification(user);
 
     // 3. Create the corresponding Shop document
     const shopData: ShopProfile = {
@@ -30,7 +30,7 @@ export const authService = {
     await setDoc(doc(db, "shops", user.uid), shopData);
     
     // 4. Force a logout so they cannot access the dashboard yet
-    await signOut(auth);
+    // await signOut(auth);
     
     return user;
   },
@@ -39,10 +39,10 @@ export const authService = {
     const credential = await signInWithEmailAndPassword(auth, email, password);
     
     // Block access if the email is not verified
-    if (!credential.user.emailVerified) {
-      await signOut(auth);
-      throw new Error("Please check your inbox and verify your email address before logging in.");
-    }
+    // if (!credential.user.emailVerified) {
+    //   await signOut(auth);
+    //   throw new Error("Please check your inbox and verify your email address before logging in.");
+    // }
     
     return credential.user;
   },
