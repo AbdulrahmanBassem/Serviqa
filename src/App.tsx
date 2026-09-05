@@ -7,6 +7,7 @@ import { Dashboard } from "./pages/Dashboard";
 import { Clients } from "./pages/Clients";
 import { Vehicles } from "./pages/Vehicles";
 import { Jobs } from "./pages/Jobs";
+import { Inventory } from "./pages/Inventory";
 
 function App() {
   return (
@@ -22,7 +23,7 @@ function App() {
             <Route path="/jobs" element={<Jobs />} />
             <Route path="/clients" element={<Clients />} />
             <Route path="/vehicles" element={<Vehicles />} />
-            <Route path="/inventory" element={<div>Inventory Module Loading...</div>} />
+            <Route path="/inventory" element={<Inventory />} />
           </Route>
         </Route>
 
