@@ -114,6 +114,6 @@ The codebase is organized by **Features** rather than strictly by file type, red
 
 ## Deployment Strategy
 
-Serviqa is deployed continuously via **Vercel**. 
+Serviqa is deployed continuously via **Vercel**. https://serviqa.vercel.app/
 
 To handle React Router's client-side routing, the repository includes a root `vercel.json` file. This configuration catches all incoming route requests and rewrites them to `index.html`. This ensures that hard refreshes or direct navigation to routes like `/dashboard` or `/clients` resolve correctly without throwing 404 errors from the Vercel edge servers.
