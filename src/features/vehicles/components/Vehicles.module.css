@@ -37,8 +37,9 @@
 }
 .table {
   width: 100%;
+  /* Force the table to be at least 800px wide so columns don't squash */
+  min-width: 800px; 
   border-collapse: collapse;
-  text-align: left;
 }
 .table th {
   background-color: var(--color-slate-50);
@@ -76,4 +77,23 @@
   padding: 3rem;
   text-align: center;
   color: var(--color-slate-500);
+}
+
+.tableResponsiveWrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch; /* Smooth momentum scrolling on iOS */
+  margin-bottom: 1rem;
+  border-radius: var(--radius-md);
+}
+
+
+
+/* Optional: tighten padding on mobile to fit more data on screen */
+@media (max-width: 768px) {
+  .table th,
+  .table td {
+    padding: 0.75rem 0.5rem;
+    font-size: 0.875rem;
+  }
 }
