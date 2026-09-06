@@ -82,7 +82,7 @@ The codebase is organized by **Features** rather than strictly by file type, red
 
 1.  **Clone the repository:**
     ```bash
-    git clone [https://github.com/yourusername/serviqa.git](https://github.com/yourusername/serviqa.git)
+    git clone [https://github.com/AbdulrahmanBassem/Serviqa.git](https://github.com/AbdulrahmanBassem/Serviqa.git)
     cd serviqa
     ```
 2.  **Install dependencies:**
