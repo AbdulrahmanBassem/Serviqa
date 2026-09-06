@@ -70,8 +70,8 @@ export const JobModal = ({ isOpen, onClose, job }: Props) => {
 
         <form key={job?.id || "new"} onSubmit={handleSubmit}>
           <div className={styles.formGroup}>
-            <label className={styles.label}>Client *</label>
-            <select name="clientId" required value={selectedClientId} onChange={(e) => setSelectedClientId(e.target.value)} className={styles.input}>
+            <label htmlFor="clientId" className={styles.label}>Client *</label>
+            <select id="clientId" name="clientId" required value={selectedClientId} onChange={(e) => setSelectedClientId(e.target.value)} className={styles.input}>
               <option value="" disabled>Select a client...</option>
               {clients?.map(client => (
                 <option key={client.id} value={client.id}>{client.fullName}</option>
@@ -80,8 +80,8 @@ export const JobModal = ({ isOpen, onClose, job }: Props) => {
           </div>
           
           <div className={styles.formGroup}>
-            <label className={styles.label}>Vehicle *</label>
-            <select name="vehicleId" required defaultValue={job?.vehicleId || ""} disabled={!selectedClientId} className={styles.input}>
+            <label htmlFor="vehicleId" className={styles.label}>Vehicle *</label>
+            <select id="vehicleId" name="vehicleId" required defaultValue={job?.vehicleId || ""} disabled={!selectedClientId} className={styles.input}>
               <option value="" disabled>Select a vehicle...</option>
               {filteredVehicles.map(vehicle => (
                 <option key={vehicle.id} value={vehicle.id}>{vehicle.make} {vehicle.model} ({vehicle.plateNumber})</option>
@@ -90,13 +90,13 @@ export const JobModal = ({ isOpen, onClose, job }: Props) => {
           </div>
 
           <div className={styles.formGroup}>
-            <label className={styles.label}>Job Title *</label>
+            <label htmlFor="title" className={styles.label}>Job Title *</label>
             <input name="title" type="text" required defaultValue={job?.title} className={styles.input} placeholder="e.g. Brake Pad Replacement" />
           </div>
 
           <div className={styles.formGroup}>
-            <label className={styles.label}>Initial Status *</label>
-            <select name="status" required defaultValue={job?.status || "todo"} className={styles.input}>
+            <label htmlFor="status" className={styles.label}>Initial Status *</label>
+            <select id="status" name="status" required defaultValue={job?.status || "todo"} className={styles.input}>
               <option value="todo">To Do</option>
               <option value="in-progress">In Progress</option>
               <option value="waiting-parts">Waiting on Parts</option>

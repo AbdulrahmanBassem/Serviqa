@@ -60,23 +60,23 @@ export const ClientModal = ({ isOpen, onClose, client }: Props) => {
 
         <form key={client?.id || "new"} onSubmit={handleSubmit}>
           <div className={styles.formGroup}>
-            <label className={styles.label}>Full Name *</label>
-            <input name="fullName" type="text" required defaultValue={client?.fullName} className={styles.input} />
+            <label htmlFor="fullName" className={styles.label}>Full Name *</label>
+            <input id="fullName" name="fullName" type="text" required defaultValue={client?.fullName} className={styles.input} />
           </div>
           
           <div className={styles.formGroup}>
-            <label className={styles.label}>Phone Number *</label>
-            <input name="phoneNumber" type="tel" required defaultValue={client?.phoneNumber} className={styles.input} />
+            <label htmlFor="phoneNumber" className={styles.label}>Phone Number *</label>
+            <input id="phoneNumber" name="phoneNumber" type="tel" required defaultValue={client?.phoneNumber} className={styles.input} />
           </div>
 
           <div className={styles.formGroup}>
-            <label className={styles.label}>Email Address</label>
-            <input name="email" type="email" defaultValue={client?.email} className={styles.input} />
+            <label htmlFor="email" className={styles.label}>Email Address</label>
+            <input id="email" name="email" type="email" defaultValue={client?.email} className={styles.input} />
           </div>
 
           <div className={styles.formGroup}>
-            <label className={styles.label}>Notes</label>
-            <textarea name="notes" rows={3} defaultValue={client?.notes} className={styles.input} />
+            <label htmlFor="notes" className={styles.label}>Notes</label>
+            <textarea id="notes" name="notes" rows={3} defaultValue={client?.notes} className={styles.input} />
           </div>
 
           <div className={styles.footer}>
