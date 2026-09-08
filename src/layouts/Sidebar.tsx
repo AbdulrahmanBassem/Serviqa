@@ -1,6 +1,7 @@
 import { NavLink } from "react-router-dom";
-import { Wrench, LayoutDashboard, Kanban, Users, Car, Package, LogOut, Bot, X } from "lucide-react";
+import {  LayoutDashboard, Kanban, Users, Car, Package, LogOut, Bot, X } from "lucide-react";
 import { authService } from "../features/auth/api/authService";
+import logo from "/serviqa logo blue.png";
 import styles from "./DashboardLayout.module.css";
 
 interface SidebarProps {
@@ -22,9 +23,12 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     <>
       {isOpen && <div className={styles.mobileBackdrop} onClick={onClose} aria-hidden="true" />}
       <aside className={`${styles.sidebar} ${isOpen ? styles.open : ""}`}>
-        <div className={styles.brand}>
-          <Wrench size={24} color="var(--color-primary-600)" />
-          Serviqa
+        <div className={styles.brandContainer}>
+          <img 
+            src={logo} 
+            alt="Serviqa Logo" 
+            className={styles.logoImage} 
+          />
           <button className={styles.mobileCloseBtn} onClick={onClose} aria-label="Close menu">
             <X size={24} />
           </button>
