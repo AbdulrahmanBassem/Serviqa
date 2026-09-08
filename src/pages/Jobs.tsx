@@ -1,5 +1,17 @@
 import { useState } from "react";
-import { Plus, Edit2, Trash2, Loader2 } from "lucide-react";
+import { Plus, Edit2, Trash2, Loader2, User, Car } from "lucide-react";
+import { 
+  DndContext, 
+  type DragEndEvent,
+  type DragStartEvent,
+  PointerSensor, 
+  KeyboardSensor, 
+  useSensor, 
+  useSensors,
+  useDroppable,
+  useDraggable,
+  DragOverlay
+} from "@dnd-kit/core";
 import { useJobs, useUpdateJobStatus, useDeleteJob } from "../features/jobs/api/jobHooks";
 import { useClients } from "../features/clients/api/clientHooks";
 import { useVehicles } from "../features/vehicles/api/vehicleHooks";
@@ -14,74 +26,169 @@ const COLUMNS: { id: JobStatus; label: string }[] = [
   { id: "done", label: "Done" },
 ];
 
+// Reusable Droppable Column
+const KanbanColumn = ({ id, label, count, children }: { id: string, label: string, count: number, children: React.ReactNode }) => {
+  const { setNodeRef } = useDroppable({ id });
+  return (
+    <div ref={setNodeRef} className={styles.column}>
+      <div className={styles.columnHeader}>
+        {label} <span className={styles.columnCount}>{count}</span>
+      </div>
+      {children}
+    </div>
+  );
+};
+
+// Reusable Draggable Card
+type KanbanCardProps = {
+  job: Job;
+  clientName: string;
+  vehicleName: string;
+  onEdit?: (job: Job) => void;
+  onDelete?: (id: string) => void;
+  isOverlay?: boolean;
+};
+
+const KanbanCard = ({ job, clientName, vehicleName, onEdit, onDelete, isOverlay }: KanbanCardProps) => {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ 
+    id: isOverlay ? `overlay-${job.id}` : job.id 
+  });
+
+  const style = {
+    opacity: isDragging && !isOverlay ? 0.3 : 1,
+    cursor: isOverlay ? 'grabbing' : 'pointer',
+  };
+
+  return (
+    <div 
+      ref={isOverlay ? undefined : setNodeRef} 
+      style={style} 
+      {...(isOverlay ? {} : listeners)} 
+      {...(isOverlay ? {} : attributes)} 
+      className={styles.card}
+    >
+      <div className={styles.cardHeader}>
+        <div className={styles.cardTitle}>{job.title}</div>
+      </div>
+      
+      <div className={styles.cardTags}>
+        <div className={styles.tag}><User size={14} /> {clientName}</div>
+        <div className={styles.tag}><Car size={14} /> {vehicleName}</div>
+      </div>
+
+      <div className={styles.cardFooter}>
+        {job.estimatedCost ? (
+          <span className={styles.costBadge}>${job.estimatedCost.toFixed(2)}</span>
+        ) : <span />}
+        
+        <div className={styles.cardActions} onPointerDown={(e) => e.stopPropagation()}>
+          <button onClick={() => onEdit?.(job)} title="Edit Job"><Edit2 size={16} /></button>
+          <button onClick={() => onDelete?.(job.id)} className={styles.deleteBtn} title="Delete Job"><Trash2 size={16} /></button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const Jobs = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingJob, setEditingJob] = useState<Job | null>(null);
-
+  const [activeId, setActiveId] = useState<string | null>(null);
+  
   const { data: jobs, isLoading: loadingJobs } = useJobs();
   const { data: clients } = useClients();
   const { data: vehicles } = useVehicles();
   const { mutate: updateStatus } = useUpdateJobStatus();
   const { mutate: deleteJob } = useDeleteJob();
 
+  // W3C ARIA compliant keyboard & pointer drag sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor)
+  );
+
   const handleOpenModal = (job?: Job) => {
     setEditingJob(job || null);
     setIsModalOpen(true);
   };
 
-  const getClientName = (id: string) => clients?.find(c => c.id === id)?.fullName || "Unknown";
-  const getVehicleName = (id: string) => {
-    const v = vehicles?.find(v => v.id === id);
-    return v ? `${v.make} ${v.model}` : "Unknown";
+  const handleDelete = (id: string) => {
+    if (window.confirm("Are you sure you want to delete this job?")) deleteJob(id);
+  };
+
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    setActiveId(null);
+    const { active, over } = event;
+    if (!over) return;
+
+    const jobId = active.id as string;
+    const newStatus = over.id as JobStatus;
+    const job = jobs?.find(j => j.id === jobId);
+
+    if (job && job.status !== newStatus) {
+      updateStatus({ id: jobId, status: newStatus });
+    }
   };
 
   if (loadingJobs) return <div style={{ display: "flex", justifyContent: "center", padding: "3rem" }}><Loader2 size={32} className="animate-spin" color="var(--color-primary-600)" /></div>;
+
+  const activeJob = activeId ? jobs?.find(j => j.id === activeId) : null;
 
   return (
     <div className={styles.container}>
       <div className={styles.header}>
         <h1 className={styles.title}>Active Jobs</h1>
         <button onClick={() => handleOpenModal()} className={styles.addButton}>
-          <Plus size={20} /> Create Job
+          <Plus size={20} /> New Job
         </button>
       </div>
 
-      <div className={styles.board}>
-        {COLUMNS.map(column => {
-          const columnJobs = jobs?.filter(job => job.status === column.id) || [];
-          
-          return (
-            <div key={column.id} className={styles.column}>
-              <div className={styles.columnHeader}>
-                {column.label} <span>{columnJobs.length}</span>
-              </div>
-              
-              {columnJobs.map(job => (
-                <div key={job.id} className={styles.card}>
-                  <div className={styles.cardTitle}>{job.title}</div>
-                  <div className={styles.cardTags}>
-                    <span>👤 {getClientName(job.clientId)}</span>
-                    <span>🚗 {getVehicleName(job.vehicleId)}</span>
-                  </div>
-                  <div className={styles.cardActions}>
-                    <select 
-                      className={styles.statusSelect} 
-                      value={job.status} 
-                      onChange={(e) => updateStatus({ id: job.id, status: e.target.value as JobStatus })}
-                    >
-                      {COLUMNS.map(col => <option key={col.id} value={col.id}>{col.label}</option>)}
-                    </select>
-                    <div style={{ display: "flex", gap: "0.25rem" }}>
-                      <button onClick={() => handleOpenModal(job)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--color-slate-400)" }}><Edit2 size={14} /></button>
-                      <button onClick={() => { if(window.confirm("Delete job?")) deleteJob(job.id); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--color-danger)" }}><Trash2 size={14} /></button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          );
-        })}
-      </div>
+      <DndContext 
+        sensors={sensors} 
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
+        <div className={styles.board}>
+          {COLUMNS.map(column => {
+            const columnJobs = jobs?.filter(job => job.status === column.id) || [];
+            return (
+              <KanbanColumn key={column.id} id={column.id} label={column.label} count={columnJobs.length}>
+                {columnJobs.map(job => (
+                  <KanbanCard 
+                    key={job.id} 
+                    job={job} 
+                    clientName={clients?.find(c => c.id === job.clientId)?.fullName || "Unknown"}
+                    vehicleName={(() => {
+                      const v = vehicles?.find(v => v.id === job.vehicleId);
+                      return v ? `${v.make} ${v.model}` : "Unknown";
+                    })()}
+                    onEdit={handleOpenModal}
+                    onDelete={handleDelete}
+                  />
+                ))}
+              </KanbanColumn>
+            );
+          })}
+        </div>
+
+        <DragOverlay dropAnimation={{ duration: 200, easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)' }}>
+          {activeJob ? (
+            <KanbanCard 
+              job={activeJob} 
+              clientName={clients?.find(c => c.id === activeJob.clientId)?.fullName || "Unknown"}
+              vehicleName={(() => {
+                const v = vehicles?.find(v => v.id === activeJob.vehicleId);
+                return v ? `${v.make} ${v.model}` : "Unknown";
+              })()}
+              isOverlay 
+            />
+          ) : null}
+        </DragOverlay>
+      </DndContext>
 
       <JobModal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setEditingJob(null); }} job={editingJob} />
     </div>
