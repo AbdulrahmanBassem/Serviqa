@@ -1,4 +1,10 @@
 :root {
+
+  /* Backgrounds */
+  --color-app-bg: #F5F5F7; /* macOS off-white */
+  --glass-bg: rgba(255, 255, 255, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.4);
+
   /* Brand Primary: Mechanic Blue */
   --color-primary-50: #eff6ff;
   --color-primary-100: #dbeafe;
@@ -41,15 +47,16 @@
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
 
-  /* Borders & Radii */
-  --radius-sm: 0.375rem;
-  --radius-md: 0.80rem;
-  --radius-lg: 0.90rem;
+  /* Radii */
+  --radius-sm: 8px;
+  --radius-md: 12px; /* Squircles */
+  --radius-lg: 16px;
   --radius-full: 9999px;
 
-  /* Shadows for Elevation */
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  /* Shadows */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.06);
+  --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.04);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
 }
 

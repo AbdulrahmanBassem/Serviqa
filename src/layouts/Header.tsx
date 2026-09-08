@@ -1,6 +1,9 @@
+import { useState } from "react";
+import { useLocation, Link } from "react-router-dom";
 import { useAuth } from "../features/auth/context/AuthContext";
-import styles from "./DashboardLayout.module.css";
-import { Menu } from "lucide-react";
+import { authService } from "../features/auth/api/authService";
+import { Menu, Sparkles } from "lucide-react";
+import styles from "./Header.module.css";
 
 interface HeaderProps {
   onMenuToggle: () => void;
@@ -8,11 +11,26 @@ interface HeaderProps {
 
 export const Header = ({ onMenuToggle }: HeaderProps) => {
   const { user } = useAuth();
+  const { logout } = authService;
+  const location = useLocation();
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  // Parse current route for the breadcrumb (e.g., "/inventory" -> "inventory")
+  const currentPath = location.pathname.split("/").pop() || "dashboard";
+  
   const initial = user?.email?.[0].toUpperCase() || "S";
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error("Failed to log out", error);
+    }
+  };
 
   return (
     <header className={styles.header}>
-      <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+      {/* Functional Breadcrumb */}
+      <div className={styles.leftSection}>
         <button 
           className={styles.menuToggleBtn} 
           onClick={onMenuToggle}
@@ -20,17 +38,36 @@ export const Header = ({ onMenuToggle }: HeaderProps) => {
         >
           <Menu size={24} />
         </button>
-        <h1 style={{ fontSize: "1.25rem", fontWeight: "600", color: "var(--color-slate-900)" }}>
-          Overview
-        </h1>
+        <div className={styles.breadcrumb}>
+          <span className={styles.separator}>/</span>
+          <h1 className={styles.currentPage}>{currentPath}</h1>
+        </div>
       </div>
-      <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-        <div style={{
-           width: "36px", height: "36px", borderRadius: "50%",
-           backgroundColor: "var(--color-primary-100)", color: "var(--color-primary-700)",
-           display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold"
-        }}>
-          {initial}
+
+      {/* Functional Actions */}
+      <div className={styles.rightSection}>
+        <Link to="/ai-assistant" className={styles.actionBtn}>
+          <Sparkles size={16} />
+          <span>Ask AI</span>
+        </Link>
+        
+        <div className={styles.profileContainer}>
+          <button 
+            className={styles.avatarBtn}
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
+            aria-label="User menu"
+          >
+            {initial}
+          </button>
+          
+          {isDropdownOpen && (
+            <div className={styles.dropdown}>
+              <button onClick={handleLogout} className={styles.dropdownItem}>
+                Sign Out
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>
