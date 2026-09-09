@@ -3,8 +3,10 @@ import { Users, Kanban, DollarSign, AlertTriangle, Loader2, ClipboardList, Packa
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { useClients } from "../features/clients/api/clientHooks";
 import { useJobs } from "../features/jobs/api/jobHooks";
+import { useDailyMetrics } from "../features/jobs/api/jobHooks";
 import { useInventory } from "../features/inventory/api/inventoryHooks";
 import styles from "./Dashboard.module.css";
+import { useMemo, useState } from "react";
 
 // Helper for dynamic pill colors
 const getStatusStyle = (status: string) => {
@@ -23,17 +25,6 @@ const PIE_COLORS = {
   'waiting-parts': '#f97316',
   'done': '#22c55e'
 };
-
-// Mock 7-day revenue trend (until historical data is added to the backend)
-const REVENUE_DATA = [
-  { name: 'Mon', total: 1200 },
-  { name: 'Tue', total: 2100 },
-  { name: 'Wed', total: 1800 },
-  { name: 'Thu', total: 2400 },
-  { name: 'Fri', total: 3200 },
-  { name: 'Sat', total: 2800 },
-  { name: 'Sun', total: 3800 },
-];
 
 // Helper for dynamic greeting
 const getGreeting = () => {
@@ -68,8 +59,36 @@ export const Dashboard = () => {
   const { data: clients, isLoading: loadingClients } = useClients();
   const { data: jobs, isLoading: loadingJobs } = useJobs();
   const { data: inventory, isLoading: loadingInventory } = useInventory();
+  const [timeRange, setTimeRange] = useState<number>(7);
+  
+  // 2. Pass the selected time range into the hook
+  const { data: metrics, isLoading: loadingMetrics } = useDailyMetrics(timeRange);
 
-  if (loadingClients || loadingJobs || loadingInventory) {
+  const isLoading = loadingClients || loadingJobs || loadingInventory || loadingMetrics;
+
+  const revenueData = useMemo(() => {
+    const days = [];
+    for (let i = timeRange - 1; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      
+      const dateString = d.toISOString().split("T")[0];
+      // Use short weekday for 7 days, but switch to numeric dates (e.g., "9/9") for 14/30 days to save space
+      const label = timeRange === 7 
+        ? new Intl.DateTimeFormat('en-US', { weekday: 'short' }).format(d)
+        : `${d.getMonth() + 1}/${d.getDate()}`;
+      
+      const dayData = metrics?.find(m => m.date === dateString);
+      
+      days.push({
+        name: label,
+        total: dayData ? dayData.revenue : 0
+      });
+    }
+    return days;
+  }, [metrics, timeRange]);
+
+  if (isLoading) {
     return (
       <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%" }}>
         <Loader2 size={40} className="animate-spin" color="var(--color-primary-600)" />
@@ -79,13 +98,18 @@ export const Dashboard = () => {
 
   // Calculations
   const totalClients = clients?.length || 0;
-  const activeJobs = jobs?.filter(job => job.status !== "done") || [];
+  const activeJobs = jobs?.filter(job => (job.status !== "done" && job.status !== "archived")) || [];
   const pendingRevenue = activeJobs.reduce((sum, job) => sum + (job.estimatedCost || 0), 0);
   const lowStockItems = inventory?.filter(item => item.quantity <= 5) || [];
   const recentJobs = activeJobs.slice(0, 5);
 
   // Process live data for the Donut Chart
   const jobStatusCounts = jobs?.reduce((acc, job) => {
+    // Skip archived jobs so they don't appear in the pipeline breakdown
+    if (job.status === "archived") {
+      return acc;
+    }
+    
     acc[job.status] = (acc[job.status] || 0) + 1;
     return acc;
   }, {} as Record<string, number>) || {};
@@ -152,10 +176,21 @@ export const Dashboard = () => {
       {/* New Charts Section */}
       <div className={styles.chartsGrid}>
         <div className={styles.section}>
-          <h2 className={styles.sectionTitle}>7-Day Revenue Trend</h2>
+          <div className={styles.sectionHeader}>
+            <h2 className={styles.sectionTitle} style={{ marginBottom: 0 }}>Revenue Trend</h2>
+            <select 
+              value={timeRange} 
+              onChange={(e) => setTimeRange(Number(e.target.value))}
+              className={styles.timeRangeSelect}
+            >
+              <option value={7}>Last 7 Days</option>
+              <option value={14}>Last 14 Days</option>
+              <option value={30}>Last 30 Days</option>
+            </select>
+          </div>
           <div className={styles.chartContainer}>
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={REVENUE_DATA} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <AreaChart data={revenueData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>

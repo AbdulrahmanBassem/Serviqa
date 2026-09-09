@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Plus, Edit2, Trash2, Loader2, User, Car } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Plus, Edit2, Trash2, Loader2, User, Car, Receipt, History } from "lucide-react";
 import { 
   DndContext, 
   type DragEndEvent,
@@ -16,6 +17,7 @@ import { useJobs, useUpdateJobStatus, useDeleteJob } from "../features/jobs/api/
 import { useClients } from "../features/clients/api/clientHooks";
 import { useVehicles } from "../features/vehicles/api/vehicleHooks";
 import { JobModal } from "../features/jobs/components/JobModal";
+import { JobHistoryModal } from "../features/jobs/components/JobHistoryModal";
 import type { Job, JobStatus } from "../features/jobs/types";
 import styles from "../features/jobs/components/Jobs.module.css";
 
@@ -46,10 +48,11 @@ type KanbanCardProps = {
   vehicleName: string;
   onEdit?: (job: Job) => void;
   onDelete?: (id: string) => void;
+  onHandover?: (id: string) => void;
   isOverlay?: boolean;
 };
 
-const KanbanCard = ({ job, clientName, vehicleName, onEdit, onDelete, isOverlay }: KanbanCardProps) => {
+const KanbanCard = ({ job, clientName, vehicleName, onEdit, onDelete, onHandover, isOverlay }: KanbanCardProps) => {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ 
     id: isOverlay ? `overlay-${job.id}` : job.id 
   });
@@ -86,14 +89,26 @@ const KanbanCard = ({ job, clientName, vehicleName, onEdit, onDelete, isOverlay 
           <button onClick={() => onDelete?.(job.id)} className={styles.deleteBtn} title="Delete Job"><Trash2 size={16} /></button>
         </div>
       </div>
+
+      {job.status === "done" && !isOverlay && (
+        <button 
+          className={styles.handoverBtn} 
+          onPointerDown={(e) => e.stopPropagation()} 
+          onClick={() => onHandover?.(job.id)}
+        >
+          <Receipt size={16} /> Handover & Invoice
+        </button>
+      )}
     </div>
   );
 };
 
 export const Jobs = () => {
+  const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingJob, setEditingJob] = useState<Job | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   
   const { data: jobs, isLoading: loadingJobs } = useJobs();
   const { data: clients } = useClients();
@@ -114,6 +129,10 @@ export const Jobs = () => {
 
   const handleDelete = (id: string) => {
     if (window.confirm("Are you sure you want to delete this job?")) deleteJob(id);
+  };
+
+  const handleHandover = (id: string) => {
+    navigate(`/invoice/${id}`);
   };
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -142,9 +161,14 @@ export const Jobs = () => {
     <div className={styles.container}>
       <div className={styles.header}>
         <h1 className={styles.title}>Active Jobs</h1>
-        <button onClick={() => handleOpenModal()} className={styles.addButton}>
-          <Plus size={20} /> New Job
-        </button>
+        <div className={styles.headerActions}>
+          <button onClick={() => setIsHistoryOpen(true)} className={styles.secondaryBtn}>
+            <History size={18} /> History
+          </button>
+          <button onClick={() => handleOpenModal()} className={styles.addButton}>
+            <Plus size={20} /> New Job
+          </button>
+        </div>
       </div>
 
       <DndContext 
@@ -154,7 +178,7 @@ export const Jobs = () => {
       >
         <div className={styles.board}>
           {COLUMNS.map(column => {
-            const columnJobs = jobs?.filter(job => job.status === column.id) || [];
+            const columnJobs = jobs?.filter(job => job.status === column.id && job.status !== "archived") || [];
             return (
               <KanbanColumn key={column.id} id={column.id} label={column.label} count={columnJobs.length}>
                 {columnJobs.map(job => (
@@ -168,6 +192,7 @@ export const Jobs = () => {
                     })()}
                     onEdit={handleOpenModal}
                     onDelete={handleDelete}
+                    onHandover={handleHandover}
                   />
                 ))}
               </KanbanColumn>
@@ -191,6 +216,7 @@ export const Jobs = () => {
       </DndContext>
 
       <JobModal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setEditingJob(null); }} job={editingJob} />
+      <JobHistoryModal isOpen={isHistoryOpen} onClose={() => setIsHistoryOpen(false)} />  
     </div>
   );
 };

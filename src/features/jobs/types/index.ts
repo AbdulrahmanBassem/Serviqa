@@ -1,4 +1,4 @@
-export type JobStatus = "todo" | "in-progress" | "waiting-parts" | "done";
+export type JobStatus = "todo" | "in-progress" | "waiting-parts" | "done" | "archived";
 
 export interface Job {
   id: string;

@@ -1,0 +1,88 @@
+.overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+.modal {
+  background: white;
+  padding: 2rem;
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 800px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-lg);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.title {
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--color-slate-900);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.tableContainer {
+  overflow-y: auto;
+  border: 1px solid var(--color-slate-200);
+  border-radius: var(--radius-md);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: var(--text-sm);
+}
+
+.table th, .table td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--color-slate-100);
+}
+
+.table th {
+  background: var(--color-slate-50);
+  font-weight: 600;
+  color: var(--color-slate-700);
+  position: sticky;
+  top: 0;
+}
+
+.emptyState {
+  padding: 3rem;
+  text-align: center;
+  color: var(--color-slate-500);
+}
+
+.actionBtn {
+  background: none;
+  border: none;
+  color: var(--color-slate-400);
+  cursor: pointer;
+  padding: 0.35rem;
+  border-radius: 6px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.actionBtn:hover {
+  color: var(--color-primary-600);
+  background: var(--color-primary-50);
+}

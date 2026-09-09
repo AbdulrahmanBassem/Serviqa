@@ -61,3 +61,48 @@ export const useDeleteJob = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: jobKeys.all(shopId) }),
   });
 };
+
+export const useCompleteAndPayJob = () => {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const shopId = user?.uid as string;
+  
+  return useMutation({
+    mutationFn: ({ id, amount }: { id: string; amount: number }) => 
+      jobService.completeAndPayJob(shopId, id, amount),
+    onSuccess: () => {
+      // Invalidate the jobs list
+      queryClient.invalidateQueries({ queryKey: jobKeys.all(shopId) });
+      // NEW: Force the dashboard chart to refresh its data
+      queryClient.invalidateQueries({ queryKey: ["dailyMetrics", shopId] }); 
+    },
+  });
+};
+
+export const useDailyMetrics = (days: number = 7) => {
+  const { user } = useAuth();
+  const shopId = user?.uid as string;
+  
+  return useQuery({
+    queryKey: ["dailyMetrics", shopId, days], 
+    queryFn: () => jobService.getDailyMetrics(shopId, days),
+    enabled: !!shopId,
+  });
+};
+
+export const useUnarchiveJob = () => {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const shopId = user?.uid as string;
+  
+  return useMutation({
+    mutationFn: ({ id, amount }: { id: string; amount: number }) => 
+      jobService.unarchiveJob(shopId, id, amount),
+    onSuccess: () => {
+      // Invalidate the jobs list
+      queryClient.invalidateQueries({ queryKey: jobKeys.all(shopId) });
+      // NEW: Force the dashboard chart to refresh its data
+      queryClient.invalidateQueries({ queryKey: ["dailyMetrics", shopId] }); 
+    },
+  });
+};

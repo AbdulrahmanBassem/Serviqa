@@ -9,6 +9,7 @@ import { Vehicles } from "./pages/Vehicles";
 import { Jobs } from "./pages/Jobs";
 import { Inventory } from "./pages/Inventory";
 import { AiAssistant } from "./pages/AiAssistant";
+import { Invoice } from "./features/jobs/components/Invoice";
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
             <Route path="/vehicles" element={<Vehicles />} />
             <Route path="/inventory" element={<Inventory />} />
             <Route path="/ai-assistant" element={<AiAssistant />} />
+            <Route element={<Invoice />} path="/invoice/:jobId" />
           </Route>
         </Route>
 
