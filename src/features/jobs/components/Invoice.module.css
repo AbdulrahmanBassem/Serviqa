@@ -173,23 +173,25 @@
 }
 
 /* Hide interactive elements when printing or generating PDF */
-@media print {
-  .partSelector, .actions, .removeBtn {
-    display: none !important;
-  }
-  .container {
-    box-shadow: none;
-    border: none;
-    margin: 0;
-    padding: 0;
-  }
-  .input {
-    border: none !important;
-    background: transparent !important;
-    padding: 0 !important;
-    box-shadow: none !important;
-    color: var(--color-slate-900) !important;
-    appearance: none;
-    -webkit-appearance: none;
-  }
+.pdfMode .partSelector, 
+.pdfMode .actions, 
+.pdfMode .removeBtn {
+  display: none !important;
+}
+
+.pdfMode {
+  box-shadow: none !important;
+  border: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.pdfMode .input {
+  border: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  color: var(--color-slate-900) !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
 }

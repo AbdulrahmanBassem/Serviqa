@@ -63,18 +63,28 @@ export const Invoice = () => {
     setSelectedParts(prev => prev.filter(p => p.itemId !== itemId));
   };
 
-  const handleDownloadPdf = () => {
+  const handleDownloadPdf = async () => {
     const element = document.getElementById('invoice-print-area');
     if (!element) return;
 
+    // 1. Apply the flattening styles
+    element.classList.add(styles.pdfMode);
+
     const opt = {
       margin: 0.5,
-      filename: `Invoice_${job.id.substring(0, 8)}.pdf`,
+      filename: `Invoice_${job?.id.substring(0, 8) || 'receipt'}.pdf`,
       image: { type: 'jpeg' as const, quality: 0.98 },
       html2canvas: { scale: 2, useCORS: true },
-      jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } as const
+      jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' as const }
     };
-    html2pdf().set(opt).from(element).save();
+
+    try {
+      // 2. Await the PDF generation
+      await html2pdf().set(opt).from(element).save();
+    } finally {
+      // 3. Remove the flattening styles immediately after (even if it fails)
+      element.classList.remove(styles.pdfMode);
+    }
   };
 
   const handlePayment = () => {
