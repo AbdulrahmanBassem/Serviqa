@@ -15,7 +15,6 @@ interface Message {
 }
 
 export const AiAssistant = () => {
-  // 1. Fetch live shop data silently in the background
   const { data: clients } = useClients();
   const { data: vehicles } = useVehicles();
   const { data: jobs } = useJobs();
@@ -27,6 +26,7 @@ export const AiAssistant = () => {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -36,9 +36,10 @@ export const AiAssistant = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
-    setError(null);
 
+    setError(null);
     const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    
     if (!apiKey) {
       setError("VITE_GEMINI_API_KEY is missing in your .env file.");
       return;
@@ -50,14 +51,13 @@ export const AiAssistant = () => {
     setIsLoading(true);
 
     try {
-      // 2. Compile the live data into a System Prompt
       const systemInstruction = `
         You are Serviqa, an expert automotive mechanic and shop management AI. 
         You provide accurate diagnostic advice (OBD-II codes, torque specs, procedures).
         You also have access to the shop's live database in JSON format below. 
         Use this data to answer questions about inventory, jobs, clients, and vehicles.
         Be concise, professional, and do not reveal the raw JSON structure to the user.
-
+        
         CRITICAL GUARDRAIL: You are strictly limited to discussing automotive topics, vehicle repairs, and this shop's data. If the user asks about ANY topic outside of automotive repair or shop management (e.g., cooking, politics, general trivia, coding), you MUST refuse to answer. Respond politely by saying: "I am specialized in automotive diagnostics and shop management. I can only assist with vehicle repairs and your shop's data."
         
         LIVE SHOP DATA:
@@ -69,11 +69,10 @@ export const AiAssistant = () => {
 
       const genAI = new GoogleGenerativeAI(apiKey);
       const model = genAI.getGenerativeModel({ 
-        model: "gemini-3.6-flash",
+        model: "gemini-3.6-flash", 
         systemInstruction 
       });
 
-      // 3. Convert our local message state into Gemini's expected format
       const history = messages.slice(1).map(msg => ({
         role: msg.role === "user" ? "user" : "model",
         parts: [{ text: msg.content }]
@@ -100,7 +99,10 @@ export const AiAssistant = () => {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h1 className={styles.title}><Bot size={28} color="var(--color-primary-600)" /> Shop Assistant</h1>
+        <div className={styles.botIconWrapper}>
+          <Bot size={24} />
+        </div>
+        <h1 className={styles.title}>Shop Assistant</h1>
       </div>
 
       <div className={styles.chatArea}>
@@ -111,23 +113,23 @@ export const AiAssistant = () => {
         )}
         
         {messages.map((msg) => (
-        <div key={msg.id} className={`${styles.messageWrapper} ${msg.role === "user" ? styles.messageUser : styles.messageAi}`}>
+          <div key={msg.id} className={`${styles.messageWrapper} ${msg.role === "user" ? styles.messageUser : styles.messageAi}`}>
             <div className={`${styles.bubble} ${msg.role === "user" ? styles.bubbleUser : styles.bubbleAi}`}>
-            {msg.role === "ai" ? (
+              {msg.role === "ai" ? (
                 <div className={styles.markdown}>
                   <ReactMarkdown>{msg.content}</ReactMarkdown>
                 </div>
-            ) : (
+              ) : (
                 msg.content
-            )}
+              )}
             </div>
-        </div>
+          </div>
         ))}
         
         {isLoading && (
           <div className={`${styles.messageWrapper} ${styles.messageAi}`}>
             <div className={`${styles.bubble} ${styles.bubbleAi}`}>
-              <Loader2 size={20} className="animate-spin" color="var(--color-slate-500)" />
+              <Loader2 size={20} className="animate-spin" color="var(--color-primary-500)" />
             </div>
           </div>
         )}
@@ -136,9 +138,16 @@ export const AiAssistant = () => {
 
       <div className={styles.inputArea}>
         <form onSubmit={handleSubmit} className={styles.form}>
-          <input type="text" value={input} onChange={(e) => setInput(e.target.value)} placeholder="E.g., What does P0420 mean? or Do we have 5W-30 in stock?" className={styles.input} disabled={isLoading} />
+          <input 
+            type="text" 
+            value={input} 
+            onChange={(e) => setInput(e.target.value)} 
+            placeholder="Ask about P0420, stock levels, or active jobs..." 
+            className={styles.input} 
+            disabled={isLoading} 
+          />
           <button type="submit" disabled={!input.trim() || isLoading} className={styles.sendBtn}>
-            <Send size={18} />
+            <Send size={18} style={{ transform: "translateX(-1px)" }} />
           </button>
         </form>
       </div>

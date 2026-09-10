@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { Plus, Trash2, Edit2, Loader2, Search, Users } from "lucide-react";
 import { useClients, useDeleteClient } from "../features/clients/api/clientHooks";
 import { ClientModal } from "../features/clients/components/ClientModal";
+import { DataCard } from "../components/DataCard/DataCard";
 import type { Client } from "../features/clients/types";
 import styles from "../features/clients/components/Clients.module.css";
 
@@ -36,7 +37,7 @@ export const Clients = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  
+
   const { data: clients, isLoading, error } = useClients();
   const { mutate: deleteClient, isPending: isDeleting } = useDeleteClient();
 
@@ -71,7 +72,6 @@ export const Clients = () => {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        {/* <h1 className={styles.title}>Clients</h1> */}
         <div className={styles.headerActions}>
           <div className={styles.searchContainer}>
             <Search size={16} className={styles.searchIcon} />
@@ -108,49 +108,80 @@ export const Clients = () => {
             <p>No clients match your search query.</p>
           </div>
         ) : (
-          <div className={styles.tableResponsiveWrapper}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Client</th>
-                  <th>Phone</th>
-                  <th>Email</th>
-                  <th>Added</th>
-                  <th style={{ width: "100px", textAlign: "right" }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredClients.map((client) => (
-                  <tr key={client.id}>
-                    <td>
-                      <div className={styles.clientNameCell}>
-                        <div 
-                          className={styles.avatar} 
-                          style={{ background: getAvatarGradient(client.fullName) }}
-                        >
-                          {getInitials(client.fullName)}
-                        </div>
-                        <span className={styles.clientName}>{client.fullName}</span>
-                      </div>
-                    </td>
-                    <td style={{ fontFamily: "monospace", fontSize: "0.9rem" }}>{client.phoneNumber}</td>
-                    <td>{client.email || <span style={{ color: "var(--color-slate-400)" }}>—</span>}</td>
-                    <td>{new Date(client.createdAt).toLocaleDateString()}</td>
-                    <td>
-                      <div className={styles.actionGroup}>
-                        <button onClick={() => handleOpenModal(client)} className={styles.actionBtn} title="Edit Client">
-                          <Edit2 size={16} />
-                        </button>
-                        <button onClick={() => handleDelete(client.id)} disabled={isDeleting} className={`${styles.actionBtn} ${styles.deleteBtn}`} title="Delete Client">
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
+          <>
+            {/* Desktop Table View */}
+            <div className={`${styles.tableResponsiveWrapper} ${styles.desktopView}`}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Client</th>
+                    <th>Phone</th>
+                    <th>Email</th>
+                    <th>Added</th>
+                    <th style={{ width: "100px", textAlign: "right" }}>Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {filteredClients.map((client) => (
+                    <tr key={client.id}>
+                      <td>
+                        <div className={styles.clientNameCell}>
+                          <div 
+                            className={styles.avatar} 
+                            style={{ background: getAvatarGradient(client.fullName) }}
+                          >
+                            {getInitials(client.fullName)}
+                          </div>
+                          <span className={styles.clientName}>{client.fullName}</span>
+                        </div>
+                      </td>
+                      <td style={{ fontFamily: "monospace", fontSize: "0.9rem" }}>{client.phoneNumber}</td>
+                      <td>{client.email || <span style={{ color: "var(--color-slate-400)" }}>—</span>}</td>
+                      <td>{new Date(client.createdAt).toLocaleDateString()}</td>
+                      <td>
+                        <div className={styles.actionGroup}>
+                          <button onClick={() => handleOpenModal(client)} className={styles.actionBtn} title="Edit Client">
+                            <Edit2 size={16} />
+                          </button>
+                          <button onClick={() => handleDelete(client.id)} disabled={isDeleting} className={`${styles.actionBtn} ${styles.deleteBtn}`} title="Delete Client">
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className={styles.mobileView}>
+              {filteredClients.map((client) => (
+                <DataCard
+                  key={client.id}
+                  title={client.fullName}
+                  subtitle={client.email || "No Email Provided"}
+                  iconInitials={getInitials(client.fullName)}
+                  iconGradient={getAvatarGradient(client.fullName)}
+                  iconShape="circle"
+                  details={[
+                    { label: "Phone", value: client.phoneNumber },
+                    { label: "Added", value: new Date(client.createdAt).toLocaleDateString() }
+                  ]}
+                  actions={
+                    <>
+                      <button onClick={() => handleOpenModal(client)} className={styles.actionBtn}>
+                        <Edit2 size={18} />
+                      </button>
+                      <button onClick={() => handleDelete(client.id)} disabled={isDeleting} className={`${styles.actionBtn} ${styles.deleteBtn}`}>
+                        <Trash2 size={18} />
+                      </button>
+                    </>
+                  }
+                />
+              ))}
+            </div>
+          </>
         )}
       </div>
 

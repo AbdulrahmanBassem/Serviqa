@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { Plus, Edit2, Trash2, Loader2, Search, Package } from "lucide-react";
 import { useInventory, useDeleteInventoryItem } from "../features/inventory/api/inventoryHooks";
 import { InventoryModal } from "../features/inventory/components/InventoryModal";
+import { DataCard } from "../components/DataCard/DataCard";
 import type { InventoryItem } from "../features/inventory/types";
 import styles from "../features/inventory/components/Inventory.module.css";
 
@@ -71,7 +72,6 @@ export const Inventory = () => {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        {/* <h1 className={styles.title}>Inventory</h1> */}
         <div className={styles.headerActions}>
           <div className={styles.searchContainer}>
             <Search size={16} className={styles.searchIcon} />
@@ -108,57 +108,94 @@ export const Inventory = () => {
             <p>No items match your search query.</p>
           </div>
         ) : (
-          <div className={styles.tableResponsiveWrapper}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Item Name</th>
-                  <th>SKU / Part #</th>
-                  <th>Supplier</th>
-                  <th>Stock</th>
-                  <th>Price</th>
-                  <th style={{ width: "100px", textAlign: "right" }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredItems.map((item) => (
-                  <tr key={item.id}>
-                    <td>
-                      <div className={styles.itemNameCell}>
-                        <div 
-                          className={styles.itemIcon} 
-                          style={{ background: getPartGradient(item.itemName) }}
-                        >
-                          {getPartInitials(item.itemName)}
-                        </div>
-                        <span className={styles.itemName}>{item.itemName}</span>
-                      </div>
-                    </td>
-                    <td style={{ fontFamily: "monospace", fontSize: "0.9rem" }}>{item.sku || <span style={{ color: "var(--color-slate-400)" }}>—</span>}</td>
-                    <td>{item.supplier || <span style={{ color: "var(--color-slate-400)" }}>—</span>}</td>
-                    <td>
-                      {item.quantity <= 5 ? (
-                        <span className={styles.lowStockBadge}>{item.quantity} Low</span>
-                      ) : (
-                        <span>{item.quantity}</span>
-                      )}
-                    </td>
-                    <td style={{ fontWeight: 500 }}>${item.unitPrice.toFixed(2)}</td>
-                    <td>
-                      <div className={styles.actionGroup}>
-                        <button onClick={() => handleOpenModal(item)} className={styles.actionBtn} title="Edit Item">
-                          <Edit2 size={16} />
-                        </button>
-                        <button onClick={() => handleDelete(item.id)} disabled={isDeleting} className={`${styles.actionBtn} ${styles.deleteBtn}`} title="Delete Item">
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
+          <>
+            {/* Desktop Table View */}
+            <div className={`${styles.tableResponsiveWrapper} ${styles.desktopView}`}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Item Name</th>
+                    <th>SKU / Part #</th>
+                    <th>Supplier</th>
+                    <th>Stock</th>
+                    <th>Price</th>
+                    <th style={{ width: "100px", textAlign: "right" }}>Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {filteredItems.map((item) => (
+                    <tr key={item.id}>
+                      <td>
+                        <div className={styles.itemNameCell}>
+                          <div 
+                            className={styles.itemIcon} 
+                            style={{ background: getPartGradient(item.itemName) }}
+                          >
+                            {getPartInitials(item.itemName)}
+                          </div>
+                          <span className={styles.itemName}>{item.itemName}</span>
+                        </div>
+                      </td>
+                      <td style={{ fontFamily: "monospace", fontSize: "0.9rem" }}>{item.sku || <span style={{ color: "var(--color-slate-400)" }}>—</span>}</td>
+                      <td>{item.supplier || <span style={{ color: "var(--color-slate-400)" }}>—</span>}</td>
+                      <td>
+                        {item.quantity <= 5 ? (
+                          <span className={styles.lowStockBadge}>{item.quantity} Low</span>
+                        ) : (
+                          <span>{item.quantity}</span>
+                        )}
+                      </td>
+                      <td style={{ fontWeight: 500 }}>${item.unitPrice.toFixed(2)}</td>
+                      <td>
+                        <div className={styles.actionGroup}>
+                          <button onClick={() => handleOpenModal(item)} className={styles.actionBtn} title="Edit Item">
+                            <Edit2 size={16} />
+                          </button>
+                          <button onClick={() => handleDelete(item.id)} disabled={isDeleting} className={`${styles.actionBtn} ${styles.deleteBtn}`} title="Delete Item">
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className={styles.mobileView}>
+              {filteredItems.map((item) => (
+                <DataCard
+                  key={item.id}
+                  title={item.itemName}
+                  subtitle={item.sku ? `SKU: ${item.sku}` : "No SKU"}
+                  iconInitials={getPartInitials(item.itemName)}
+                  iconGradient={getPartGradient(item.itemName)}
+                  iconShape="square"
+                  details={[
+                    { 
+                      label: "Stock", 
+                      value: item.quantity <= 5 
+                        ? <span className={styles.lowStockBadge}>{item.quantity} Low</span> 
+                        : item.quantity 
+                    },
+                    { label: "Price", value: `$${item.unitPrice.toFixed(2)}` },
+                    { label: "Supplier", value: item.supplier || "—" }
+                  ]}
+                  actions={
+                    <>
+                      <button onClick={() => handleOpenModal(item)} className={styles.actionBtn}>
+                        <Edit2 size={18} />
+                      </button>
+                      <button onClick={() => handleDelete(item.id)} disabled={isDeleting} className={`${styles.actionBtn} ${styles.deleteBtn}`}>
+                        <Trash2 size={18} />
+                      </button>
+                    </>
+                  }
+                />
+              ))}
+            </div>
+          </>
         )}
       </div>
 

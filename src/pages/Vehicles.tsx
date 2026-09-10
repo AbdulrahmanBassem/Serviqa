@@ -5,6 +5,7 @@ import { useClients } from "../features/clients/api/clientHooks";
 import { VehicleModal } from "../features/vehicles/components/VehicleModal";
 import type { Vehicle } from "../features/vehicles/types";
 import styles from "../features/vehicles/components/Vehicles.module.css";
+import { DataCard } from "../components/DataCard/DataCard";
 
 const getVehicleInitials = (make: string, model: string) => {
   const m1 = make ? make.charAt(0) : "";
@@ -118,7 +119,8 @@ export const Vehicles = () => {
             <p>No vehicles match your search query.</p>
           </div>
         ) : (
-          <div className={styles.tableResponsiveWrapper}>
+          <>
+          <div className={`${styles.tableResponsiveWrapper} ${styles.desktopView}`}>
             <table className={styles.table}>
               <thead>
                 <tr>
@@ -163,6 +165,34 @@ export const Vehicles = () => {
               </tbody>
             </table>
           </div>
+          <div className={styles.mobileView}>
+              {filteredVehicles.map((vehicle) => (
+                <DataCard
+                  key={vehicle.id}
+                  title={`${vehicle.make} ${vehicle.model}`}
+                  subtitle={`Owner: ${getClientName(vehicle.clientId)}`}
+                  iconInitials={getVehicleInitials(vehicle.make, vehicle.model)}
+                  iconGradient={getVehicleGradient(vehicle.plateNumber)}
+                  iconShape="square"
+                  details={[
+                    { label: "Year", value: vehicle.year },
+                    { label: "Plate #", value: vehicle.plateNumber },
+                    { label: "VIN", value: vehicle.vin || "—" }
+                  ]}
+                  actions={
+                    <>
+                      <button onClick={() => handleOpenModal(vehicle)} className={styles.actionBtn}>
+                        <Edit2 size={18} />
+                      </button>
+                      <button onClick={() => handleDelete(vehicle.id)} disabled={isDeleting} className={`${styles.actionBtn} ${styles.deleteBtn}`}>
+                        <Trash2 size={18} />
+                      </button>
+                    </>
+                  }
+                />
+              ))}
+            </div>
+         </>  
         )}
       </div>
 

@@ -214,3 +214,37 @@
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
+
+.mobileView {
+  display: none;
+}
+
+.desktopView {
+  display: block;
+}
+
+@media (max-width: 768px) {
+  .desktopView {
+    display: none;
+  }
+  
+  .mobileView {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .searchInput {
+    width: 140px;
+  }
+  .searchInput:focus {
+  border-color: var(--color-primary-400);
+  background: white;
+  width: 150px;
+ }
+ .tableWrapper {
+    border: none;
+    box-shadow: none;
+    background: none;
+  }
+}
