@@ -162,9 +162,8 @@
 
 @media (max-width: 768px) {
   .container {
-    border-radius: 0;
-    border-left: none;
-    border-right: none;
+    height: calc(100dvh - 60px); 
+    min-height: unset;
   }
   
   .bubble {
