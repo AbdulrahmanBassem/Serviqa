@@ -281,9 +281,7 @@ export const Dashboard = () => {
               {lowStockItems.map(item => (
                 <div key={item.id} className={styles.listItem}>
                   <span style={{ fontWeight: "600", color: "var(--color-slate-900)" }}>{item.itemName}</span>
-                  <span style={{ color: "var(--color-danger)", fontWeight: "600" }}>
-                    {item.quantity} left
-                  </span>
+                  <span className={styles.lowStockBadge}>{item.quantity} left</span>
                 </div>
               ))}
             </div>

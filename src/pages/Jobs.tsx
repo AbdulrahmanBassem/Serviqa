@@ -160,7 +160,7 @@ export const Jobs = () => {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h1 className={styles.title}>Active Jobs</h1>
+        {/* <h1 className={styles.title}>Active Jobs</h1> */}
         <div className={styles.headerActions}>
           <button onClick={() => setIsHistoryOpen(true)} className={styles.secondaryBtn}>
             <History size={18} /> History

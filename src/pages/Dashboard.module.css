@@ -272,3 +272,12 @@
   border-color: var(--color-primary-400);
   box-shadow: var(--shadow-sm);
 }
+
+.lowStockBadge {
+  background-color: #fef2f2;
+  color: var(--color-danger);
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-full);
+  font-weight: 600;
+  font-size: 0.75rem;
+}
