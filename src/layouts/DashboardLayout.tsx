@@ -20,7 +20,16 @@ export const DashboardLayout = () => {
 
       <main
         className={styles.main}
-        style={isAiPage ? { padding: 0 } : {}}
+        style={
+          isAiPage
+            ? {
+                padding: 0,
+                overflow: "hidden",
+                position: "relative",
+                display: "flex" ,
+              }
+            : {}
+        }
       >
         <Outlet />
       </main>
