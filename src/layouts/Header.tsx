@@ -39,7 +39,6 @@ export const Header = ({ onMenuToggle }: HeaderProps) => {
           <Menu size={24} />
         </button>
         <div className={styles.breadcrumb}>
-          <span className={styles.separator}>/</span>
           <h1 className={styles.currentPage}>{currentPath}</h1>
         </div>
       </div>

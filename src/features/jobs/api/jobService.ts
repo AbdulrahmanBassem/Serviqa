@@ -13,7 +13,7 @@ import {
   limit
 } from "firebase/firestore";
 import { db } from "../../../config/firebase";
-import type { Job, CreateJobPayload, JobStatus } from "../types";
+import type { Job, CreateJobPayload, JobStatus, UsedPart } from "../types";
 
 const COLLECTION_NAME = "jobs";
 
@@ -60,15 +60,27 @@ export const jobService = {
     await deleteDoc(doc(db, COLLECTION_NAME, jobId));
   },
 
-  completeAndPayJob: async (shopId: string, jobId: string, amount: number): Promise<void> => {
+  completeAndPayJob: async (
+    shopId: string, 
+    jobId: string, 
+    amount: number,
+    mileage: number,
+    usedParts: UsedPart[]
+  ): Promise<void> => {
     if (!shopId || !jobId) throw new Error("Shop ID and Job ID are required.");
+    
     const batch = writeBatch(db);
-
-    // 1. Move job off the board to "archived"
     const jobRef = doc(db, COLLECTION_NAME, jobId);
-    batch.update(jobRef, { status: "archived" as JobStatus });
+    
+    // 1. Archive job and save the used parts for history
+    batch.update(jobRef, { 
+      status: "archived" as JobStatus,
+      estimatedCost: amount,
+      mileage: mileage,
+      usedParts: usedParts 
+    });
 
-    // 2. Record revenue for the dashboard chart
+    // 2. Record revenue
     const today = new Date().toISOString().split("T")[0]; 
     const metricRef = doc(db, "shops", shopId, "dailyMetrics", today);
     batch.set(metricRef, {
@@ -76,6 +88,14 @@ export const jobService = {
       revenue: increment(amount),
       jobsCompleted: increment(1)
     }, { merge: true });
+
+    // 3. Deduct inventory
+    usedParts.forEach((part) => {
+      const inventoryRef = doc(db, "inventory", part.itemId);
+      batch.update(inventoryRef, {
+        quantity: increment(-part.quantity)
+      });
+    });
 
     await batch.commit();
   },
@@ -93,24 +113,31 @@ export const jobService = {
     return snapshot.docs.map(doc => doc.data() as { date: string, revenue: number, jobsCompleted: number });
   },
 
-  unarchiveJob: async (shopId: string, jobId: string, amount: number): Promise<void> => {
+  unarchiveJob: async (shopId: string, jobId: string, amount: number, usedParts: UsedPart[] = []): Promise<void> => {
     if (!shopId || !jobId) throw new Error("Shop ID and Job ID are required.");
     const batch = writeBatch(db);
-
-    // 1. Move the job back to the "todo" column
+    
+    // 1. Move back to "todo"
     const jobRef = doc(db, COLLECTION_NAME, jobId);
     batch.update(jobRef, { status: "todo" as JobStatus });
-
-    // 2. Void the revenue from today's ledger
+    
+    // 2. Void the revenue
     const today = new Date().toISOString().split("T")[0]; 
     const metricRef = doc(db, "shops", shopId, "dailyMetrics", today);
-    
     batch.set(metricRef, {
       date: today,
       revenue: increment(-amount),
       jobsCompleted: increment(-1)
     }, { merge: true });
 
+    // 3. Restock the refunded parts
+    usedParts.forEach((part) => {
+      const inventoryRef = doc(db, "inventory", part.itemId);
+      batch.update(inventoryRef, {
+        quantity: increment(part.quantity)
+      });
+    });
+
     await batch.commit();
-  }
+  },
 };

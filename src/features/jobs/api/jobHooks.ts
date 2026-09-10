@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { jobService } from "./jobService";
 import { useAuth } from "../../auth/context/AuthContext";
-import type { CreateJobPayload, JobStatus } from "../types";
+import type { CreateJobPayload, JobStatus, UsedPart } from "../types";
 
 export const jobKeys = {
   all: (shopId: string) => ["jobs", shopId] as const,
@@ -66,15 +66,25 @@ export const useCompleteAndPayJob = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const shopId = user?.uid as string;
-  
+
   return useMutation({
-    mutationFn: ({ id, amount }: { id: string; amount: number }) => 
-      jobService.completeAndPayJob(shopId, id, amount),
+    mutationFn: ({ 
+      id, 
+      amount, 
+      mileage, 
+      usedParts 
+    }: { 
+      id: string; 
+      amount: number; 
+      mileage: number; 
+      usedParts: UsedPart[] 
+    }) => jobService.completeAndPayJob(shopId, id, amount, mileage, usedParts),
     onSuccess: () => {
-      // Invalidate the jobs list
+      // Invalidate jobs and metrics
       queryClient.invalidateQueries({ queryKey: jobKeys.all(shopId) });
-      // NEW: Force the dashboard chart to refresh its data
-      queryClient.invalidateQueries({ queryKey: ["dailyMetrics", shopId] }); 
+      queryClient.invalidateQueries({ queryKey: ["dailyMetrics", shopId] });
+      // NEW: Force inventory to refresh so deductions appear instantly
+      queryClient.invalidateQueries({ queryKey: ["inventory", shopId] });
     },
   });
 };
@@ -94,15 +104,22 @@ export const useUnarchiveJob = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const shopId = user?.uid as string;
-  
+
   return useMutation({
-    mutationFn: ({ id, amount }: { id: string; amount: number }) => 
-      jobService.unarchiveJob(shopId, id, amount),
+    mutationFn: ({ 
+      id, 
+      amount, 
+      usedParts 
+    }: { 
+      id: string; 
+      amount: number; 
+      usedParts?: UsedPart[] 
+    }) => jobService.unarchiveJob(shopId, id, amount, usedParts || []),
     onSuccess: () => {
-      // Invalidate the jobs list
       queryClient.invalidateQueries({ queryKey: jobKeys.all(shopId) });
-      // NEW: Force the dashboard chart to refresh its data
-      queryClient.invalidateQueries({ queryKey: ["dailyMetrics", shopId] }); 
+      queryClient.invalidateQueries({ queryKey: ["dailyMetrics", shopId] });
+      // NEW: Force inventory to refresh so restocked items appear instantly
+      queryClient.invalidateQueries({ queryKey: ["inventory", shopId] }); 
     },
   });
 };

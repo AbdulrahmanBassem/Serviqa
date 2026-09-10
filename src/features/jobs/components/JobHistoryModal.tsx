@@ -3,6 +3,7 @@ import { useJobs, useUnarchiveJob } from "../api/jobHooks"; // NEW IMPORT
 import { useClients } from "../../clients/api/clientHooks";
 import { useVehicles } from "../../vehicles/api/vehicleHooks";
 import styles from "./JobHistoryModal.module.css";
+import type { UsedPart } from "../types";
 
 export const JobHistoryModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
   const { data: jobs } = useJobs();
@@ -14,9 +15,9 @@ export const JobHistoryModal = ({ isOpen, onClose }: { isOpen: boolean; onClose:
 
   const archivedJobs = jobs?.filter(job => job.status === "archived") || [];
 
-  const handleUnarchive = (jobId: string, estimatedCost: number | undefined) => {
-    if (window.confirm("Restore this job to 'To Do' and refund the revenue?")) {
-      unarchiveJob({ id: jobId, amount: estimatedCost || 0 });
+  const handleUnarchive = (jobId: string, estimatedCost: number | undefined, usedParts: UsedPart[] | undefined) => {
+    if (window.confirm("Restore this job to 'To Do', refund the revenue, and restock parts?")) {
+      unarchiveJob({ id: jobId, amount: estimatedCost || 0, usedParts });
     }
   };
 
@@ -60,7 +61,7 @@ export const JobHistoryModal = ({ isOpen, onClose }: { isOpen: boolean; onClose:
                       </td>
                       <td style={{ textAlign: "right" }}>
                         <button 
-                          onClick={() => handleUnarchive(job.id, job.estimatedCost)}
+                          onClick={() => handleUnarchive(job.id, job.estimatedCost, job.usedParts)}
                           disabled={isPending}
                           className={styles.actionBtn}
                           title="Unarchive and Refund"

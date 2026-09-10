@@ -5,11 +5,21 @@ export interface Job {
   shopId: string;
   clientId: string;
   vehicleId: string;
-  title: string;          // e.g., "Brake Pad Replacement"
-  description?: string;   // Optional mechanic notes
+  title: string;
+  description?: string;
   status: JobStatus;
-  estimatedCost?: number; // Optional
+  estimatedCost?: number;
+  mileage?: number;
+  usedParts?: UsedPart[]; 
   createdAt: string;
 }
 
 export type CreateJobPayload = Omit<Job, "id" | "shopId" | "createdAt">;
+
+// NEW: Interface for parts consumed during a job
+export interface UsedPart {
+  itemId: string;
+  itemName: string;
+  quantity: number;
+  unitPrice: number;
+}
