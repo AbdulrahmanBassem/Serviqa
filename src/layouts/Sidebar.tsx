@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import {  LayoutDashboard, Kanban, Users, Car, Package, LogOut, Bot, X } from "lucide-react";
+import {  LayoutDashboard, Kanban, Users, Car, Package, LogOut, Bot, X, Calendar } from "lucide-react";
 import { authService } from "../features/auth/api/authService";
 import logo from "/serviqa logo blue.png";
 import styles from "./DashboardLayout.module.css";
@@ -12,6 +12,7 @@ interface SidebarProps {
 const navItems = [
   { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
   { name: "Active Jobs", path: "/jobs", icon: Kanban },
+  { name: "Calendar", path: "/calendar", icon: Calendar },
   { name: "Clients", path: "/clients", icon: Users },
   { name: "Vehicles", path: "/vehicles", icon: Car },
   { name: "Inventory", path: "/inventory", icon: Package },

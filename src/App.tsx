@@ -10,6 +10,7 @@ import { Jobs } from "./pages/Jobs";
 import { Inventory } from "./pages/Inventory";
 import { AiAssistant } from "./pages/AiAssistant";
 import { Invoice } from "./features/jobs/components/Invoice";
+import { Calendar } from "./pages/Calendar";
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
             <Route path="/jobs" element={<Jobs />} />
             <Route path="/clients" element={<Clients />} />
             <Route path="/vehicles" element={<Vehicles />} />
+            <Route path="/calendar" element={<Calendar />} />
             <Route path="/inventory" element={<Inventory />} />
             <Route path="/ai-assistant" element={<AiAssistant />} />
             <Route element={<Invoice />} path="/invoice/:jobId" />
