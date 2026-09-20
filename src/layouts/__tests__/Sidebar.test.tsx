@@ -9,12 +9,12 @@ vi.mock("../../features/auth/api/authHooks", () => ({
 
 describe("Sidebar Component", () => {
   it("renders the application title", () => {
-    renderWithProviders(<Sidebar isOpen={true} onClose={vi.fn()} />);
+    renderWithProviders(<Sidebar isOpen={true} onClose={vi.fn()} isCollapsed={false} />);
     expect(screen.getByText("Serviqa")).toBeInTheDocument();
   });
 
   it("renders all core navigation links", () => {
-    renderWithProviders(<Sidebar isOpen={true} onClose={vi.fn()} />);
+    renderWithProviders(<Sidebar isOpen={true} onClose={vi.fn()} isCollapsed={false} />);
     
     expect(screen.getByText("Dashboard")).toBeInTheDocument();
     expect(screen.getByText("Active Jobs")).toBeInTheDocument();
@@ -25,7 +25,7 @@ describe("Sidebar Component", () => {
   });
 
   it("renders the logout button", () => {
-    renderWithProviders(<Sidebar isOpen={true} onClose={vi.fn()} />);
+    renderWithProviders(<Sidebar isOpen={true} onClose={vi.fn()} isCollapsed={false} />);
     expect(screen.getByText("Log Out")).toBeInTheDocument();
   });
 });
