@@ -4,6 +4,7 @@
   grid-template-rows: 72px 1fr; /* Taller header for breathing room */
   height: 100vh;
   background-color: var(--color-app-bg);
+  transition: grid-template-columns 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .sidebar {
@@ -21,7 +22,6 @@
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--glass-border);
-  
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -44,15 +44,21 @@
   border-bottom: 1px solid rgba(0, 0, 0, 0.04); 
 }
 
-.logoImage {
+/* Base states for both logos */
+.logoFull, .logoIcon {
   height: 32px; 
   width: auto;
   object-fit: contain;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.05));
-  transition: transform 0.2s ease;
+  transition: all 0.2s ease;
 }
 
-.logoImage:hover {
+/* Hide the icon logo by default */
+.logoIcon {
+  display: none;
+}
+
+.logoFull:hover, .logoIcon:hover {
   transform: scale(1.02);
 }
 
@@ -60,7 +66,7 @@
   padding: 1.5rem 1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.35rem; /* Tighter gap for pill layout */
+  gap: 0.35rem;
 }
 
 .navItem {
@@ -72,7 +78,18 @@
   color: var(--color-slate-500);
   text-decoration: none;
   font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.navIcon {
+  flex-shrink: 0;
+}
+
+.navText {
+  transition: opacity 0.2s;
+  opacity: 1;
 }
 
 .navItem:hover {
@@ -104,6 +121,8 @@
   border-radius: var(--radius-md);
   font-weight: 600;
   cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
   transition: all 0.2s ease;
 }
 
@@ -117,12 +136,58 @@
   display: none;
 }
 
+/* --- DESKTOP COLLAPSED BEHAVIOR --- */
+@media (min-width: 769px) {
+  .collapsedLayout {
+    grid-template-columns: 80px 1fr;
+  }
+
+  /* Image Swap Logic */
+  .sidebar.collapsed .logoFull {
+    display: none;
+  }
+
+  .sidebar.collapsed .logoIcon {
+    display: block;
+    margin: 0 auto;
+  }
+
+  .sidebar.collapsed .brandContainer {
+    padding: 1.5rem 1rem;
+    justify-content: center;
+  }
+
+  .sidebar.collapsed .navItem {
+    justify-content: center;
+    padding: 0.65rem 0;
+  }
+
+  .sidebar.collapsed .navItem:hover {
+    transform: none;
+  }
+
+  .sidebar.collapsed .navText {
+    display: none;
+  }
+
+  .sidebar.collapsed .logoutBtn {
+    margin: auto 0.5rem 1.5rem 0.5rem;
+    padding: 0.75rem 0;
+    justify-content: center;
+  }
+  
+  .sidebar.collapsed .logoutBtn .navText {
+    display: none;
+  }
+}
+
+/* --- MOBILE BEHAVIOR --- */
 @media (max-width: 768px) {
   .layout {
     grid-template-columns: 1fr;
     grid-template-rows: 72px 1fr;
   }
-  
+
   .sidebar {
     position: fixed;
     top: 0;
@@ -138,7 +203,7 @@
     transform: translateX(0);
   }
 
-  .brand {
+  .brandContainer {
     justify-content: space-between;
     width: 100%;
   }
@@ -152,7 +217,7 @@
     padding: 0.5rem;
     border-radius: var(--radius-sm);
   }
-  
+
   .menuToggleBtn:hover, .mobileCloseBtn:hover {
     background-color: var(--color-slate-100);
   }

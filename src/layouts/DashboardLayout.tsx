@@ -5,19 +5,29 @@ import { Header } from "./Header";
 import styles from "./DashboardLayout.module.css";
 
 export const DashboardLayout = () => {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [mobileMenuPath, setMobileMenuPath] = useState<string | null>(null);
+  const [isDesktopCollapsed, setIsDesktopCollapsed] = useState(false);
   const location = useLocation();
   const isAiPage = location.pathname === "/ai-assistant";
 
+  const handleMenuToggle = () => {
+    if (window.innerWidth <= 768) {
+      setMobileMenuPath((openPath) =>
+        openPath === location.pathname ? null : location.pathname,
+      );
+    } else {
+      setIsDesktopCollapsed(!isDesktopCollapsed);
+    }
+  };
+
   return (
-    <div className={styles.layout}>
+    <div className={`${styles.layout} ${isDesktopCollapsed ? styles.collapsedLayout : ""}`}>
       <Sidebar
-        isOpen={isMobileMenuOpen}
-        onClose={() => setIsMobileMenuOpen(false)}
+        isOpen={mobileMenuPath === location.pathname}
+        isCollapsed={isDesktopCollapsed}
+        onClose={() => setMobileMenuPath(null)}
       />
-
-      <Header onMenuToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
-
+      <Header onMenuToggle={handleMenuToggle} />
       <main
         className={styles.main}
         style={isAiPage ? { padding: 0 } : {}}

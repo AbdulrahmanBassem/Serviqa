@@ -60,21 +60,69 @@
   box-shadow: var(--shadow-md);
 }
 
+/* --- RESTORED 4-COLUMN METRICS GRID --- */
 .statsGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 1.5rem;
 }
 
-/* Add this right after .statsGrid */
-.chartsGrid {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 1.5rem;
+/* Base Card Styling */
+.statCard {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding: 1.5rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+  overflow: hidden;
 }
 
-@media (max-width: 1024px) {
-  .chartsGrid { grid-template-columns: 1fr; }
+.statCard:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.statHeader {
+  color: var(--color-slate-600);
+  font-size: 0.95rem;
+  font-weight: 600;
+  z-index: 2;
+}
+
+.statValue {
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: var(--color-slate-900);
+  letter-spacing: -0.02em;
+  z-index: 2;
+}
+
+.watermarkIcon {
+  position: absolute;
+  right: -4px;
+  bottom: -8px;
+  color: var(--color-slate-900);
+  opacity: 0.04;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* --- FULL WIDTH CHART LAYOUT --- */
+.fullWidthChart {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--glass-border);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
 }
 
 .chartContainer {
@@ -83,7 +131,7 @@
   margin-top: 1rem;
 }
 
-/* Custom Recharts Tooltip styling to match the macOS theme */
+/* Custom Tooltip */
 .customTooltip {
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(12px);
@@ -104,84 +152,10 @@
   font-weight: 700;
 }
 
-.statCard {
-  background: var(--glass-bg);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  padding: 1.5rem;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--shadow-sm);
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem; /* Tighter gap since the icon is moved */
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  position: relative; /* Required for the watermark */
-  overflow: hidden; /* Keeps the oversized icon contained */
-}
-
-.statCard:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-}
-
-.statHeader {
-  color: var(--color-slate-600);
-  font-size: 0.95rem;
-  font-weight: 600;
-  z-index: 2; /* Ensures text stays above the watermark */
-}
-
-.statValue {
-  font-size: 2.25rem;
-  font-weight: 700;
-  color: var(--color-slate-900);
-  letter-spacing: -0.02em;
-  z-index: 2;
-}
-
-/* The New Premium Icon Treatment */
-.watermarkIcon {
-  position: absolute;
-  right: -4px;
-  bottom: -8px;
-  color: var(--color-slate-900);
-  opacity: 0.04; /* Barely visible, highly elegant */
-  pointer-events: none;
-  z-index: 1;
-}
-
-.iconWrapper {
-  padding: 0.6rem;
-  border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.iconBlue { 
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); 
-  color: #3b82f6; 
-}
-
-.iconGreen { 
-  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); 
-  color: #22c55e; 
-}
-
-.iconOrange { 
-  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%); 
-  color: #f97316; 
-}
-
-.iconRed { 
-  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); 
-  color: #ef4444; 
-}
-
+/* --- BOTTOM 3-COLUMN LAYOUT --- */
 .sectionsGrid {
   display: grid;
-  grid-template-columns: 2fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   gap: 1.5rem;
 }
 

@@ -19,8 +19,9 @@
   gap: 1rem;
 }
 
+/* Set this to 'flex' so it shows on all screens */
 .menuToggleBtn {
-  display: none;
+  display: flex;
   background: none;
   border: none;
   cursor: pointer;
@@ -142,10 +143,7 @@
 }
 
 @media (max-width: 768px) {
-  .menuToggleBtn {
-    display: flex;
-  }
   .actionBtn span {
-    display: none; 
+    display: none;
   }
 }
