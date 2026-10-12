@@ -1,4 +1,4 @@
-import { X, Loader2, AlertCircle } from "lucide-react";
+import { X, Loader2, AlertCircle, UserPlus, UserCheck } from "lucide-react";
 import { useCreateClient, useUpdateClient } from "../api/clientHooks";
 import type { CreateClientPayload, Client } from "../types";
 import styles from "./ClientModal.module.css";
@@ -45,14 +45,24 @@ export const ClientModal = ({ isOpen, onClose, client }: Props) => {
     <div className={styles.overlay}>
       <div className={styles.modal}>
         <div className={styles.header}>
-          <h2 className={styles.title}>{isEditing ? "Edit Client" : "Add New Client"}</h2>
-          <button onClick={onClose} className={styles.closeBtn}>
-            <X size={20} />
+          <div className={styles.headerTitleGroup}>
+            <div className={styles.headerIconBadge}>
+              {isEditing ? <UserCheck size={22} /> : <UserPlus size={22} />}
+            </div>
+            <div className={styles.titleArea}>
+              <h2 className={styles.title}>{isEditing ? "Edit Client" : "Register Client"}</h2>
+              <span className={styles.subtitle}>
+                {isEditing ? "Update customer profile & contact details" : "Add a customer to track repairs and vehicles"}
+              </span>
+            </div>
+          </div>
+          <button onClick={onClose} className={styles.closeBtn} title="Close modal" aria-label="Close modal">
+            <X size={18} />
           </button>
         </div>
         
         {error && (
-          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", backgroundColor: "#fef2f2", color: "var(--color-danger)", padding: "0.75rem", borderRadius: "var(--radius-md)", marginBottom: "1rem", fontSize: "var(--text-sm)" }}>
+          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", backgroundColor: "#fef2f2", color: "var(--color-danger)", padding: "0.75rem 1rem", borderRadius: "var(--radius-lg)", marginBottom: "1.25rem", fontSize: "var(--text-sm)", border: "1px solid #fecaca" }}>
             <AlertCircle size={16} />
             <span>{error.message}</span>
           </div>
@@ -61,22 +71,52 @@ export const ClientModal = ({ isOpen, onClose, client }: Props) => {
         <form key={client?.id || "new"} onSubmit={handleSubmit}>
           <div className={styles.formGroup}>
             <label htmlFor="fullName" className={styles.label}>Full Name *</label>
-            <input id="fullName" name="fullName" type="text" required defaultValue={client?.fullName} className={styles.input} />
+            <input 
+              id="fullName" 
+              name="fullName" 
+              type="text" 
+              required 
+              defaultValue={client?.fullName} 
+              className={styles.input} 
+              placeholder="e.g. Michael Vance"
+            />
           </div>
           
           <div className={styles.formGroup}>
             <label htmlFor="phoneNumber" className={styles.label}>Phone Number *</label>
-            <input id="phoneNumber" name="phoneNumber" type="tel" required defaultValue={client?.phoneNumber} className={styles.input} />
+            <input 
+              id="phoneNumber" 
+              name="phoneNumber" 
+              type="tel" 
+              required 
+              defaultValue={client?.phoneNumber} 
+              className={styles.input} 
+              placeholder="e.g. +1 (555) 019-2834"
+            />
           </div>
 
           <div className={styles.formGroup}>
             <label htmlFor="email" className={styles.label}>Email Address</label>
-            <input id="email" name="email" type="email" defaultValue={client?.email} className={styles.input} />
+            <input 
+              id="email" 
+              name="email" 
+              type="email" 
+              defaultValue={client?.email} 
+              className={styles.input} 
+              placeholder="e.g. michael.vance@example.com"
+            />
           </div>
 
           <div className={styles.formGroup}>
             <label htmlFor="notes" className={styles.label}>Notes</label>
-            <textarea id="notes" name="notes" rows={3} defaultValue={client?.notes} className={styles.input} />
+            <textarea 
+              id="notes" 
+              name="notes" 
+              rows={3} 
+              defaultValue={client?.notes} 
+              className={styles.input} 
+              placeholder="Special customer preferences, fleet account notes..."
+            />
           </div>
 
           <div className={styles.footer}>

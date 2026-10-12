@@ -1,8 +1,8 @@
-import { X, Loader2, AlertCircle } from "lucide-react";
+import { X, Loader2, AlertCircle, CarFront } from "lucide-react";
 import { useCreateVehicle, useUpdateVehicle } from "../api/vehicleHooks";
 import { useClients } from "../../clients/api/clientHooks";
 import type { CreateVehiclePayload, Vehicle } from "../types";
-import styles from "./VehicleModal.module.css"; // Note: ensure you copy the CSS file here!
+import styles from "./VehicleModal.module.css";
 
 interface Props {
   isOpen: boolean;
@@ -13,7 +13,7 @@ interface Props {
 export const VehicleModal = ({ isOpen, onClose, vehicle }: Props) => {
   const createMutation = useCreateVehicle();
   const updateMutation = useUpdateVehicle();
-  const { data: clients } = useClients(); // Fetch clients for the dropdown
+  const { data: clients } = useClients();
 
   const isEditing = !!vehicle;
   const isPending = createMutation.isPending || updateMutation.isPending;
@@ -34,7 +34,7 @@ export const VehicleModal = ({ isOpen, onClose, vehicle }: Props) => {
     };
 
     const vin = formData.get("vin") as string;
-    if (vin.trim()) payload.vin = vin.trim(); // Prevent saving undefined
+    if (vin.trim()) payload.vin = vin.trim();
 
     if (isEditing) {
       updateMutation.mutate({ id: vehicle.id, data: payload }, { onSuccess: onClose });
@@ -47,59 +47,120 @@ export const VehicleModal = ({ isOpen, onClose, vehicle }: Props) => {
     <div className={styles.overlay}>
       <div className={styles.modal}>
         <div className={styles.header}>
-          <h2 className={styles.title}>{isEditing ? "Edit Vehicle" : "Add New Vehicle"}</h2>
-          <button onClick={onClose} className={styles.closeBtn}><X size={20} /></button>
+          <div className={styles.headerTitleGroup}>
+            <div className={styles.headerIconBadge}>
+              <CarFront size={22} />
+            </div>
+            <div className={styles.titleArea}>
+              <h2 className={styles.title}>{isEditing ? "Edit Vehicle" : "Register Vehicle"}</h2>
+              <span className={styles.subtitle}>
+                {isEditing ? "Update vehicle specifications & ownership" : "Add customer car to shop maintenance fleet"}
+              </span>
+            </div>
+          </div>
+          <button onClick={onClose} className={styles.closeBtn} title="Close modal" aria-label="Close modal">
+            <X size={18} />
+          </button>
         </div>
         
         {error && (
-          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", backgroundColor: "#fef2f2", color: "var(--color-danger)", padding: "0.75rem", borderRadius: "var(--radius-md)", marginBottom: "1rem", fontSize: "var(--text-sm)" }}>
-            <AlertCircle size={16} /><span>{error.message}</span>
+          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", backgroundColor: "#fef2f2", color: "var(--color-danger)", padding: "0.75rem 1rem", borderRadius: "var(--radius-lg)", marginBottom: "1.25rem", fontSize: "var(--text-sm)", border: "1px solid #fecaca" }}>
+            <AlertCircle size={16} />
+            <span>{error.message}</span>
           </div>
         )}
 
         <form key={vehicle?.id || "new"} onSubmit={handleSubmit}>
           <div className={styles.formGroup}>
-            <label className={styles.label}>Owner / Client *</label>
-            <select name="clientId" required defaultValue={vehicle?.clientId} className={styles.input}>
-              <option value="" disabled>Select a client...</option>
+            <label htmlFor="clientId" className={styles.label}>Owner / Client *</label>
+            <select 
+              id="clientId"
+              name="clientId" 
+              required 
+              defaultValue={vehicle?.clientId} 
+              className={styles.input}
+            >
+              <option value="" disabled>Select a registered client...</option>
               {clients?.map(client => (
-                <option key={client.id} value={client.id}>{client.fullName} ({client.phoneNumber})</option>
+                <option key={client.id} value={client.id}>
+                  {client.fullName} ({client.phoneNumber})
+                </option>
               ))}
             </select>
           </div>
           
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+          <div className={styles.row}>
             <div className={styles.formGroup}>
-              <label className={styles.label}>Make *</label>
-              <input name="make" type="text" required defaultValue={vehicle?.make} className={styles.input} placeholder="e.g. Toyota" />
+              <label htmlFor="make" className={styles.label}>Make *</label>
+              <input 
+                id="make"
+                name="make" 
+                type="text" 
+                required 
+                defaultValue={vehicle?.make} 
+                className={styles.input} 
+                placeholder="e.g. Toyota, BMW" 
+              />
             </div>
             <div className={styles.formGroup}>
-              <label className={styles.label}>Model *</label>
-              <input name="model" type="text" required defaultValue={vehicle?.model} className={styles.input} placeholder="e.g. Camry" />
+              <label htmlFor="model" className={styles.label}>Model *</label>
+              <input 
+                id="model"
+                name="model" 
+                type="text" 
+                required 
+                defaultValue={vehicle?.model} 
+                className={styles.input} 
+                placeholder="e.g. Camry, 330i" 
+              />
             </div>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+          <div className={styles.row}>
             <div className={styles.formGroup}>
-              <label className={styles.label}>Year *</label>
-              <input name="year" type="number" required defaultValue={vehicle?.year} min="1900" max={new Date().getFullYear() + 1} className={styles.input} />
+              <label htmlFor="year" className={styles.label}>Year *</label>
+              <input 
+                id="year"
+                name="year" 
+                type="number" 
+                required 
+                defaultValue={vehicle?.year || new Date().getFullYear()} 
+                min="1950" 
+                max={new Date().getFullYear() + 2} 
+                className={styles.input} 
+              />
             </div>
             <div className={styles.formGroup}>
-              <label className={styles.label}>Plate Number *</label>
-              <input name="plateNumber" type="text" required defaultValue={vehicle?.plateNumber} className={styles.input} />
+              <label htmlFor="plateNumber" className={styles.label}>Plate Number *</label>
+              <input 
+                id="plateNumber"
+                name="plateNumber" 
+                type="text" 
+                required 
+                defaultValue={vehicle?.plateNumber} 
+                className={styles.input} 
+                placeholder="e.g. ABC-1234"
+              />
             </div>
           </div>
 
           <div className={styles.formGroup}>
-            <label className={styles.label}>VIN (Optional)</label>
-            <input name="vin" type="text" defaultValue={vehicle?.vin} className={styles.input} />
+            <label htmlFor="vin" className={styles.label}>VIN (Vehicle Identification Number)</label>
+            <input 
+              id="vin"
+              name="vin" 
+              type="text" 
+              defaultValue={vehicle?.vin} 
+              className={styles.input} 
+              placeholder="17-character VIN (optional)"
+            />
           </div>
 
           <div className={styles.footer}>
             <button type="button" onClick={onClose} className={styles.cancelBtn}>Cancel</button>
             <button type="submit" disabled={isPending} className={styles.submitBtn}>
               {isPending && <Loader2 size={16} className="animate-spin" />}
-              {isEditing ? "Save Changes" : "Save Vehicle"}
+              {isEditing ? "Save Changes" : "Register Vehicle"}
             </button>
           </div>
         </form>

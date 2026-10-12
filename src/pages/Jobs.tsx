@@ -1,6 +1,17 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Edit2, Trash2, Loader2, User, Car, Receipt, History } from "lucide-react";
+import { 
+  Plus, 
+  Edit2, 
+  Trash2, 
+  Loader2, 
+  User, 
+  Car, 
+  Receipt, 
+  History, 
+  Search, 
+  ArrowRight
+} from "lucide-react";
 import { 
   DndContext, 
   type DragEndEvent,
@@ -21,22 +32,53 @@ import { JobHistoryModal } from "../features/jobs/components/JobHistoryModal";
 import type { Job, JobStatus } from "../features/jobs/types";
 import styles from "../features/jobs/components/Jobs.module.css";
 
-const COLUMNS: { id: JobStatus; label: string }[] = [
-  { id: "todo", label: "To Do" },
-  { id: "in-progress", label: "In Progress" },
-  { id: "waiting-parts", label: "Waiting on Parts" },
-  { id: "done", label: "Done" },
+const COLUMNS: { id: JobStatus; label: string; accentColor: string; description: string }[] = [
+  { id: "todo", label: "To Do", accentColor: "#64748b", description: "Checked-in vehicles awaiting triage" },
+  { id: "in-progress", label: "In Progress", accentColor: "#2563eb", description: "Under active repair or diagnostic" },
+  { id: "waiting-parts", label: "Waiting on Parts", accentColor: "#f97316", description: "On hold for supplier shipments" },
+  { id: "done", label: "Done", accentColor: "#10b981", description: "Work complete • Ready for pickup & billing" },
 ];
 
 // Reusable Droppable Column
-const KanbanColumn = ({ id, label, count, children }: { id: string, label: string, count: number, children: React.ReactNode }) => {
-  const { setNodeRef } = useDroppable({ id });
+const KanbanColumn = ({ 
+  id, 
+  label, 
+  count, 
+  accentColor,
+  onQuickAdd,
+  children 
+}: { 
+  id: JobStatus; 
+  label: string; 
+  count: number; 
+  accentColor: string;
+  onQuickAdd: (status: JobStatus) => void;
+  children: React.ReactNode 
+}) => {
+  const { setNodeRef, isOver } = useDroppable({ id });
   return (
-    <div ref={setNodeRef} className={styles.column}>
+    <div 
+      ref={setNodeRef} 
+      className={`${styles.column} ${isOver ? styles.columnOver : ""}`}
+    >
       <div className={styles.columnHeader}>
-        {label} <span className={styles.columnCount}>{count}</span>
+        <div className={styles.columnTitleGroup}>
+          <span className={styles.columnAccentDot} style={{ backgroundColor: accentColor }} />
+          <h3 className={styles.columnTitle}>{label}</h3>
+          <span className={styles.columnCount}>{count}</span>
+        </div>
+        <button 
+          onClick={() => onQuickAdd(id)} 
+          className={styles.columnQuickAddBtn}
+          title={`Create new job in ${label}`}
+          aria-label={`Add job to ${label}`}
+        >
+          <Plus size={16} />
+        </button>
       </div>
-      {children}
+      <div className={styles.columnContent}>
+        {children}
+      </div>
     </div>
   );
 };
@@ -46,21 +88,43 @@ type KanbanCardProps = {
   job: Job;
   clientName: string;
   vehicleName: string;
+  plateNumber: string;
   onEdit?: (job: Job) => void;
   onDelete?: (id: string) => void;
   onHandover?: (id: string) => void;
+  onMoveStatus?: (id: string, status: JobStatus) => void;
   isOverlay?: boolean;
 };
 
-const KanbanCard = ({ job, clientName, vehicleName, onEdit, onDelete, onHandover, isOverlay }: KanbanCardProps) => {
+const KanbanCard = ({ 
+  job, 
+  clientName, 
+  vehicleName, 
+  plateNumber,
+  onEdit, 
+  onDelete, 
+  onHandover, 
+  onMoveStatus,
+  isOverlay 
+}: KanbanCardProps) => {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ 
     id: isOverlay ? `overlay-${job.id}` : job.id 
   });
 
   const style = {
-    opacity: isDragging && !isOverlay ? 0.3 : 1,
-    cursor: isOverlay ? 'grabbing' : 'pointer',
+    opacity: isDragging && !isOverlay ? 0.35 : 1,
+    cursor: isOverlay ? 'grabbing' : 'grab',
   };
+
+  const nextStatusMap: Record<JobStatus, JobStatus | null> = {
+    "todo": "in-progress",
+    "in-progress": "done",
+    "waiting-parts": "in-progress",
+    "done": null,
+    "archived": null
+  };
+
+  const nextStatus = nextStatusMap[job.status];
 
   return (
     <div 
@@ -71,22 +135,48 @@ const KanbanCard = ({ job, clientName, vehicleName, onEdit, onDelete, onHandover
       className={styles.card}
     >
       <div className={styles.cardHeader}>
-        <div className={styles.cardTitle}>{job.title}</div>
+        <h4 className={styles.cardTitle}>{job.title}</h4>
       </div>
       
       <div className={styles.cardTags}>
-        <div className={styles.tag}><User size={14} /> {clientName}</div>
-        <div className={styles.tag}><Car size={14} /> {vehicleName}</div>
+        <div className={styles.tag}>
+          <User size={13} className={styles.tagIcon} /> 
+          <span className={styles.tagText}>{clientName}</span>
+        </div>
+        <div className={styles.tag}>
+          <Car size={13} className={styles.tagIcon} /> 
+          <span className={styles.tagText}>{vehicleName}</span>
+          {plateNumber && (
+            <span className={styles.plateBadge}>{plateNumber}</span>
+          )}
+        </div>
       </div>
 
       <div className={styles.cardFooter}>
         {job.estimatedCost ? (
           <span className={styles.costBadge}>${job.estimatedCost.toFixed(2)}</span>
-        ) : <span />}
+        ) : (
+          <span className={styles.noEstimate}>No estimate</span>
+        )}
         
         <div className={styles.cardActions} onPointerDown={(e) => e.stopPropagation()}>
-          <button onClick={() => onEdit?.(job)} title="Edit Job"><Edit2 size={16} /></button>
-          <button onClick={() => onDelete?.(job.id)} className={styles.deleteBtn} title="Delete Job"><Trash2 size={16} /></button>
+          {/* Accessible Step Forward Button */}
+          {nextStatus && onMoveStatus && (
+            <button 
+              onClick={() => onMoveStatus(job.id, nextStatus)} 
+              title={`Move to ${nextStatus.replace("-", " ")}`}
+              className={styles.advanceBtn}
+              aria-label={`Advance status to ${nextStatus.replace("-", " ")}`}
+            >
+              <ArrowRight size={14} />
+            </button>
+          )}
+          <button onClick={() => onEdit?.(job)} title="Edit Job" aria-label="Edit job">
+            <Edit2 size={14} />
+          </button>
+          <button onClick={() => onDelete?.(job.id)} className={styles.deleteBtn} title="Delete Job" aria-label="Delete job">
+            <Trash2 size={14} />
+          </button>
         </div>
       </div>
 
@@ -95,8 +185,10 @@ const KanbanCard = ({ job, clientName, vehicleName, onEdit, onDelete, onHandover
           className={styles.handoverBtn} 
           onPointerDown={(e) => e.stopPropagation()} 
           onClick={() => onHandover?.(job.id)}
+          aria-label="Generate invoice and handover vehicle"
         >
-          <Receipt size={16} /> Handover & Invoice
+          <Receipt size={15} /> 
+          <span>Handover & Invoice</span>
         </button>
       )}
     </div>
@@ -107,8 +199,10 @@ export const Jobs = () => {
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingJob, setEditingJob] = useState<Job | null>(null);
+  const [defaultColumnStatus, setDefaultColumnStatus] = useState<JobStatus>("todo");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   
   const { data: jobs, isLoading: loadingJobs } = useJobs();
   const { data: clients } = useClients();
@@ -118,11 +212,12 @@ export const Jobs = () => {
 
   // W3C ARIA compliant keyboard & pointer drag sensors
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor)
   );
 
-  const handleOpenModal = (job?: Job) => {
+  const handleOpenModal = (job?: Job, initialStatus: JobStatus = "todo") => {
+    setDefaultColumnStatus(initialStatus);
     setEditingJob(job || null);
     setIsModalOpen(true);
   };
@@ -133,6 +228,10 @@ export const Jobs = () => {
 
   const handleHandover = (id: string) => {
     navigate(`/invoice/${id}`);
+  };
+
+  const handleMoveStatus = (id: string, newStatus: JobStatus) => {
+    updateStatus({ id, status: newStatus });
   };
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -153,70 +252,131 @@ export const Jobs = () => {
     }
   };
 
-  if (loadingJobs) return <div style={{ display: "flex", justifyContent: "center", padding: "3rem" }}><Loader2 size={32} className="animate-spin" color="var(--color-primary-600)" /></div>;
+  const filteredJobs = useMemo(() => {
+    if (!jobs) return [];
+    if (!searchQuery.trim()) return jobs;
+
+    const q = searchQuery.toLowerCase();
+    return jobs.filter(job => {
+      const client = clients?.find(c => c.id === job.clientId);
+      const vehicle = vehicles?.find(v => v.id === job.vehicleId);
+      const clientName = client?.fullName.toLowerCase() || "";
+      const vehicleDesc = vehicle ? `${vehicle.make} ${vehicle.model} ${vehicle.plateNumber}`.toLowerCase() : "";
+      const title = job.title.toLowerCase();
+
+      return title.includes(q) || clientName.includes(q) || vehicleDesc.includes(q);
+    });
+  }, [jobs, clients, vehicles, searchQuery]);
+
+  if (loadingJobs) {
+    return (
+      <div className={styles.loadingContainer}>
+        <Loader2 size={36} className="animate-spin" color="var(--color-primary-600)" />
+      </div>
+    );
+  }
 
   const activeJob = activeId ? jobs?.find(j => j.id === activeId) : null;
+  const activeJobClient = activeJob ? clients?.find(c => c.id === activeJob.clientId)?.fullName || "Unknown" : "";
+  const activeJobVehicle = activeJob ? vehicles?.find(v => v.id === activeJob.vehicleId) : null;
 
   return (
     <div className={styles.container}>
+      {/* Header with Search and Actions */}
       <div className={styles.header}>
-        {/* <h1 className={styles.title}>Active Jobs</h1> */}
+        <div className={styles.searchWrapper}>
+          <Search size={16} className={styles.searchIcon} />
+          <input 
+            type="text" 
+            placeholder="Search repairs, clients, or license plates..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className={styles.searchInput}
+            aria-label="Filter repair jobs"
+          />
+        </div>
+
         <div className={styles.headerActions}>
           <button onClick={() => setIsHistoryOpen(true)} className={styles.secondaryBtn}>
-            <History size={18} /> History
+            <History size={17} />
+            <span>Archive History</span>
           </button>
-          <button onClick={() => handleOpenModal()} className={styles.addButton}>
-            <Plus size={20} /> New Job
+          <button onClick={() => handleOpenModal(undefined, "todo")} className={styles.addButton}>
+            <Plus size={18} strokeWidth={2.5} />
+            <span>New Repair Job</span>
           </button>
         </div>
       </div>
 
+      {/* Kanban Board */}
       <DndContext 
         sensors={sensors} 
-        onDragStart={handleDragStart}
+        onDragStart={handleDragStart} 
         onDragEnd={handleDragEnd}
       >
         <div className={styles.board}>
           {COLUMNS.map(column => {
-            const columnJobs = jobs?.filter(job => job.status === column.id && job.status !== "archived") || [];
+            const columnJobs = filteredJobs.filter(job => job.status === column.id && job.status !== "archived");
             return (
-              <KanbanColumn key={column.id} id={column.id} label={column.label} count={columnJobs.length}>
-                {columnJobs.map(job => (
-                  <KanbanCard 
-                    key={job.id} 
-                    job={job} 
-                    clientName={clients?.find(c => c.id === job.clientId)?.fullName || "Unknown"}
-                    vehicleName={(() => {
-                      const v = vehicles?.find(v => v.id === job.vehicleId);
-                      return v ? `${v.make} ${v.model}` : "Unknown";
-                    })()}
-                    onEdit={handleOpenModal}
-                    onDelete={handleDelete}
-                    onHandover={handleHandover}
-                  />
-                ))}
+              <KanbanColumn 
+                key={column.id} 
+                id={column.id} 
+                label={column.label} 
+                count={columnJobs.length}
+                accentColor={column.accentColor}
+                onQuickAdd={(status) => handleOpenModal(undefined, status)}
+              >
+                {columnJobs.length === 0 ? (
+                  <div className={styles.emptyColumn}>
+                    <p>No jobs in {column.label.toLowerCase()}</p>
+                  </div>
+                ) : (
+                  columnJobs.map(job => {
+                    const client = clients?.find(c => c.id === job.clientId);
+                    const vehicle = vehicles?.find(v => v.id === job.vehicleId);
+                    return (
+                      <KanbanCard 
+                        key={job.id} 
+                        job={job} 
+                        clientName={client?.fullName || "Walk-in Client"}
+                        vehicleName={vehicle ? `${vehicle.make} ${vehicle.model}` : "Vehicle Unspecified"}
+                        plateNumber={vehicle?.plateNumber || ""}
+                        onEdit={handleOpenModal}
+                        onDelete={handleDelete}
+                        onHandover={handleHandover}
+                        onMoveStatus={handleMoveStatus}
+                      />
+                    );
+                  })
+                )}
               </KanbanColumn>
             );
           })}
         </div>
 
-        <DragOverlay dropAnimation={{ duration: 200, easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)' }}>
+        <DragOverlay dropAnimation={{ duration: 180, easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)' }}>
           {activeJob ? (
             <KanbanCard 
               job={activeJob} 
-              clientName={clients?.find(c => c.id === activeJob.clientId)?.fullName || "Unknown"}
-              vehicleName={(() => {
-                const v = vehicles?.find(v => v.id === activeJob.vehicleId);
-                return v ? `${v.make} ${v.model}` : "Unknown";
-              })()}
+              clientName={activeJobClient}
+              vehicleName={activeJobVehicle ? `${activeJobVehicle.make} ${activeJobVehicle.model}` : "Vehicle"}
+              plateNumber={activeJobVehicle?.plateNumber || ""}
               isOverlay 
             />
           ) : null}
         </DragOverlay>
       </DndContext>
 
-      <JobModal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setEditingJob(null); }} job={editingJob} />
-      <JobHistoryModal isOpen={isHistoryOpen} onClose={() => setIsHistoryOpen(false)} />  
+      <JobModal 
+        isOpen={isModalOpen} 
+        onClose={() => { setIsModalOpen(false); setEditingJob(null); }} 
+        job={editingJob} 
+        initialStatus={defaultColumnStatus}
+      />
+      <JobHistoryModal 
+        isOpen={isHistoryOpen} 
+        onClose={() => setIsHistoryOpen(false)} 
+      />  
     </div>
   );
 };

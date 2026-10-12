@@ -1,5 +1,5 @@
-import { X, History, ArchiveRestore } from "lucide-react";
-import { useJobs, useUnarchiveJob } from "../api/jobHooks"; // NEW IMPORT
+import { X, History, ArchiveRestore, Inbox } from "lucide-react";
+import { useJobs, useUnarchiveJob } from "../api/jobHooks";
 import { useClients } from "../../clients/api/clientHooks";
 import { useVehicles } from "../../vehicles/api/vehicleHooks";
 import styles from "./JobHistoryModal.module.css";
@@ -9,7 +9,7 @@ export const JobHistoryModal = ({ isOpen, onClose }: { isOpen: boolean; onClose:
   const { data: jobs } = useJobs();
   const { data: clients } = useClients();
   const { data: vehicles } = useVehicles();
-  const { mutate: unarchiveJob, isPending } = useUnarchiveJob(); // NEW HOOK
+  const { mutate: unarchiveJob, isPending } = useUnarchiveJob();
 
   if (!isOpen) return null;
 
@@ -25,24 +25,38 @@ export const JobHistoryModal = ({ isOpen, onClose }: { isOpen: boolean; onClose:
     <div className={styles.overlay}>
       <div className={styles.modal}>
         <div className={styles.header}>
-          <h2 className={styles.title}><History size={24} color="var(--color-primary-600)" /> Job History</h2>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-slate-400)' }}>
-            <X size={24} />
+          <div className={styles.headerTitleGroup}>
+            <div className={styles.headerIconBadge}>
+              <History size={22} />
+            </div>
+            <div className={styles.titleArea}>
+              <h2 className={styles.title}>Archived Repair Orders</h2>
+              <span className={styles.subtitle}>
+                Historical invoices, settled jobs, and reversible archive logs ({archivedJobs.length} records)
+              </span>
+            </div>
+          </div>
+          <button onClick={onClose} className={styles.closeBtn} title="Close modal" aria-label="Close modal">
+            <X size={18} />
           </button>
         </div>
         
         <div className={styles.tableContainer}>
           {archivedJobs.length === 0 ? (
-            <div className={styles.emptyState}>No archived jobs found in history.</div>
+            <div className={styles.emptyState}>
+              <Inbox size={42} style={{ opacity: 0.3 }} />
+              <span style={{ fontWeight: 600, color: "var(--color-slate-600)" }}>No archived repair orders found</span>
+              <span style={{ fontSize: "0.8rem" }}>Completed and settled invoices will appear here.</span>
+            </div>
           ) : (
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <th>Date</th>
+                  <th>Completed Date</th>
                   <th>Client</th>
                   <th>Vehicle</th>
-                  <th>Service</th>
-                  <th>Total</th>
+                  <th>Service Performed</th>
+                  <th>Total Billed</th>
                   <th style={{ textAlign: "right" }}>Actions</th>
                 </tr>
               </thead>
@@ -53,20 +67,21 @@ export const JobHistoryModal = ({ isOpen, onClose }: { isOpen: boolean; onClose:
                   return (
                     <tr key={job.id}>
                       <td>{new Date(job.createdAt).toLocaleDateString()}</td>
-                      <td style={{ fontWeight: 500, color: "var(--color-slate-900)" }}>{client?.fullName || "Unknown"}</td>
-                      <td>{vehicle ? `${vehicle.make} ${vehicle.model}` : "Unknown"}</td>
-                      <td>{job.title}</td>
-                      <td style={{ fontWeight: 600, color: "var(--color-primary-700)" }}>
-                        ${job.estimatedCost?.toFixed(2) || "0.00"}
+                      <td style={{ fontWeight: 600, color: "var(--color-slate-900)" }}>{client?.fullName || "Walk-in"}</td>
+                      <td>{vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model} (${vehicle.plateNumber})` : "—"}</td>
+                      <td style={{ fontWeight: 500 }}>{job.title}</td>
+                      <td className={styles.mono}>
+                        ${(job.estimatedCost ?? 0).toFixed(2)}
                       </td>
                       <td style={{ textAlign: "right" }}>
                         <button 
                           onClick={() => handleUnarchive(job.id, job.estimatedCost, job.usedParts)}
                           disabled={isPending}
                           className={styles.actionBtn}
-                          title="Unarchive and Refund"
+                          title="Restore job to Kanban & restock inventory"
                         >
-                          <ArchiveRestore size={18} />
+                          <ArchiveRestore size={14} />
+                          <span>Restore</span>
                         </button>
                       </td>
                     </tr>

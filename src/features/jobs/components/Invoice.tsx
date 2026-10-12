@@ -1,11 +1,19 @@
 import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Loader2, CheckCircle, Download, Plus, Trash2 } from "lucide-react";
+import { 
+  Loader2, 
+  CheckCircle, 
+  Download, 
+  Plus, 
+  Trash2, 
+  ArrowLeft 
+} from "lucide-react";
 import html2pdf from "html2pdf.js";
 import { useJobs, useCompleteAndPayJob } from "../api/jobHooks";
 import { useClients } from "../../clients/api/clientHooks";
 import { useVehicles } from "../../vehicles/api/vehicleHooks";
 import { useInventory } from "../../inventory/api/inventoryHooks";
+import { useShopProfile } from "../../auth/api/shopHooks";
 import type { UsedPart } from "../types";
 import styles from "./Invoice.module.css";
 
@@ -17,6 +25,7 @@ export const Invoice = () => {
   const { data: clients } = useClients();
   const { data: vehicles } = useVehicles();
   const { data: inventory } = useInventory();
+  const { data: shopProfile } = useShopProfile();
   
   const { mutate: completeJob, isPending } = useCompleteAndPayJob();
 
@@ -39,16 +48,45 @@ export const Invoice = () => {
 
   const grandTotal = partsTotal + (Number(serviceFee) || 0);
 
-  if (loadingJobs) return <div style={{ textAlign: "center", padding: "3rem" }}><Loader2 className="animate-spin" /></div>;
-  if (!job) return <div style={{ textAlign: "center", padding: "3rem" }}>Job not found.</div>;
+  if (loadingJobs) {
+    return (
+      <div style={{ textAlign: "center", padding: "4rem", display: "flex", flexDirection: "column", alignItems: "center", gap: "1rem" }}>
+        <Loader2 size={36} className="animate-spin" color="var(--color-primary-600)" />
+        <p style={{ color: "var(--color-slate-500)" }}>Loading repair order & invoice details...</p>
+      </div>
+    );
+  }
+
+  if (!job) {
+    return (
+      <div style={{ textAlign: "center", padding: "4rem" }}>
+        <h2>Repair Order Not Found</h2>
+        <p style={{ color: "var(--color-slate-500)", marginBottom: "1.5rem" }}>
+          The requested repair order could not be located in your database.
+        </p>
+        <button onClick={() => navigate("/jobs")} className={styles.backBtn}>
+          <ArrowLeft size={16} /> Return to Kanban
+        </button>
+      </div>
+    );
+  }
 
   const handleAddPart = () => {
     if (!selectedItemId) return;
     const item = inventory?.find(i => i.id === selectedItemId);
     if (!item) return;
 
+    // Check available stock
+    const existing = selectedParts.find(p => p.itemId === item.id);
+    const alreadySelected = existing ? existing.quantity : 0;
+    const totalDesired = alreadySelected + selectedQty;
+
+    if (totalDesired > item.quantity) {
+      alert(`Cannot add ${selectedQty} units. Only ${item.quantity - alreadySelected} more units of "${item.itemName}" remain in inventory.`);
+      return;
+    }
+
     setSelectedParts(prev => {
-      const existing = prev.find(p => p.itemId === item.id);
       if (existing) {
         return prev.map(p => p.itemId === item.id ? { ...p, quantity: p.quantity + selectedQty } : p);
       }
@@ -67,29 +105,26 @@ export const Invoice = () => {
     const element = document.getElementById('invoice-print-area');
     if (!element) return;
 
-    // 1. Apply the flattening styles
     element.classList.add(styles.pdfMode);
 
     const opt = {
-      margin: 0.5,
-      filename: `Invoice_${job?.id.substring(0, 8) || 'receipt'}.pdf`,
+      margin: 0.4,
+      filename: `Serviqa_Invoice_${job.id.substring(0, 8).toUpperCase()}.pdf`,
       image: { type: 'jpeg' as const, quality: 0.98 },
       html2canvas: { scale: 2, useCORS: true },
       jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' as const }
     };
 
     try {
-      // 2. Await the PDF generation
       await html2pdf().set(opt).from(element).save();
     } finally {
-      // 3. Remove the flattening styles immediately after (even if it fails)
       element.classList.remove(styles.pdfMode);
     }
   };
 
   const handlePayment = () => {
     if (!mileage) {
-      alert("Please enter the current vehicle mileage before completing the job.");
+      alert("Please enter the vehicle's odometer mileage before completing this invoice.");
       return;
     }
     
@@ -100,131 +135,214 @@ export const Invoice = () => {
         mileage: Number(mileage), 
         usedParts: selectedParts 
       }, 
-      { onSuccess: () => navigate("/dashboard") }
+      { onSuccess: () => navigate("/jobs") }
     );
   };
 
+  const todayStr = new Date().toLocaleDateString("en-US", { 
+    year: "numeric", 
+    month: "long", 
+    day: "numeric" 
+  });
+
   return (
-    <div className={styles.container}>
-      <div id="invoice-print-area">
+    <div className={styles.wrapper}>
+      {/* Top Bar Navigation */}
+      <div className={styles.topBar}>
+        <button onClick={() => navigate("/jobs")} className={styles.backBtn}>
+          <ArrowLeft size={16} />
+          <span>Back to Kanban</span>
+        </button>
+      </div>
+
+      <div className={styles.container} id="invoice-print-area">
+        {/* Invoice Header with Dynamic Shop Profile */}
         <div className={styles.header}>
-          <h1 className={styles.title}>Serviqa Auto Repair</h1>
-          <p>Official Invoice & Handover Receipt</p>
+          <div className={styles.shopInfo}>
+            <div className={styles.shopName}>
+              {shopProfile?.shopName || "Serviqa Auto Care"}
+            </div>
+            <div className={styles.shopMeta}>
+              {shopProfile?.ownerName && <span>Owner: {shopProfile.ownerName} • </span>}
+              {shopProfile?.phoneNumber && <span>Tel: {shopProfile.phoneNumber} • </span>}
+              <span>{shopProfile?.email || "service@serviqa.com"}</span>
+            </div>
+          </div>
+
+          <div className={styles.invoiceMeta}>
+            <span className={styles.invoicePill}>
+              #INV-{job.id.substring(0, 8).toUpperCase()}
+            </span>
+            <span className={styles.invoiceDate}>
+              Issued: {todayStr}
+            </span>
+          </div>
         </div>
 
+        {/* Client & Vehicle Two-Column Info Card */}
         <div className={styles.infoGrid}>
-          <div className={styles.row}>
-            <span>Client</span>
-            <span>{client?.fullName || "Unknown"}</span>
+          <div className={styles.infoCol}>
+            <span className={styles.colHeading}>Customer Information</span>
+            <div className={styles.row}>
+              <span className={styles.rowLabel}>Client Name:</span>
+              <span className={styles.rowValue}>{client?.fullName || "Walk-in Client"}</span>
+            </div>
+            <div className={styles.row}>
+              <span className={styles.rowLabel}>Phone Number:</span>
+              <span className={`${styles.rowValue} ${styles.mono}`}>{client?.phoneNumber || "—"}</span>
+            </div>
+            <div className={styles.row}>
+              <span className={styles.rowLabel}>Service Order:</span>
+              <span className={styles.rowValue}>{job.title}</span>
+            </div>
           </div>
-          <div className={styles.row}>
-            <span>Vehicle</span>
-            <span>{vehicle?.make} {vehicle?.model} ({vehicle?.plateNumber})</span>
-          </div>
-          <div className={styles.row}>
-            <span>Service</span>
-            <span>{job.title}</span>
-          </div>
-          <div className={styles.row}>
-            <span>Current Mileage</span>
-            <input 
-              type="number" 
-              value={mileage} 
-              onChange={(e) => setMileage(e.target.value ? Number(e.target.value) : "")}
-              placeholder="e.g., 45000"
-              className={styles.input}
-            />
+
+          <div className={styles.infoCol}>
+            <span className={styles.colHeading}>Vehicle Specifications</span>
+            <div className={styles.row}>
+              <span className={styles.rowLabel}>Vehicle:</span>
+              <span className={styles.rowValue}>
+                {vehicle ? `${vehicle.year} ${vehicle.make} ${vehicle.model}` : "Unassigned"}
+              </span>
+            </div>
+            <div className={styles.row}>
+              <span className={styles.rowLabel}>License Plate:</span>
+              <span className={`${styles.rowValue} ${styles.mono}`}>
+                {vehicle?.plateNumber || "—"}
+              </span>
+            </div>
+            <div className={styles.row}>
+              <span className={styles.rowLabel}>Current Mileage:</span>
+              <input 
+                type="number" 
+                value={mileage} 
+                onChange={(e) => setMileage(e.target.value ? Number(e.target.value) : "")}
+                placeholder="e.g. 52,400"
+                className={styles.mileageInput}
+                aria-label="Current Odometer Mileage"
+              />
+            </div>
           </div>
         </div>
 
-        <h3 className={styles.sectionTitle}>Parts & Materials</h3>
+        {/* Parts & Materials Breakdown */}
+        <div className={styles.sectionHeader}>
+          <h3 className={styles.sectionTitle}>Itemized Parts & Supplies</h3>
+        </div>
         
         <div className={styles.partSelector}>
           <select 
             value={selectedItemId} 
             onChange={(e) => setSelectedItemId(e.target.value)}
-            className={styles.input}
-            style={{ flex: 2 }}
+            className={styles.partSelect}
+            aria-label="Select replacement part"
           >
             <option value="">Select a part from inventory...</option>
             {inventory?.map(item => (
-              <option key={item.id} value={item.id}>
-                {item.itemName} (${item.unitPrice.toFixed(2)} ea) - {item.quantity} in stock
+              <option key={item.id} value={item.id} disabled={item.quantity === 0}>
+                {item.itemName} (${item.unitPrice.toFixed(2)} ea) — {item.quantity} in stock
               </option>
             ))}
           </select>
+
           <input 
             type="number" 
             min="1" 
             value={selectedQty} 
-            onChange={(e) => setSelectedQty(Number(e.target.value))}
-            className={styles.input}
-            style={{ flex: 1 }}
+            onChange={(e) => setSelectedQty(Math.max(1, Number(e.target.value)))}
+            className={styles.qtyInput}
+            aria-label="Part quantity"
           />
-          <button onClick={handleAddPart} disabled={!selectedItemId} className={styles.btn} style={{ background: "var(--color-primary-100)", color: "var(--color-primary-700)", padding: "0.5rem" }}>
-            <Plus size={20} /> Add
+
+          <button 
+            onClick={handleAddPart} 
+            disabled={!selectedItemId} 
+            className={styles.addPartBtn}
+          >
+            <Plus size={16} />
+            <span>Add Part</span>
           </button>
         </div>
 
-        {selectedParts.length > 0 && (
+        {selectedParts.length > 0 ? (
           <table className={styles.table}>
             <thead>
               <tr>
                 <th>Part Description</th>
-                <th>Qty</th>
-                <th>Unit Price</th>
-                <th>Total</th>
-                <th className={styles.removeBtn}></th>
+                <th style={{ width: "80px", textAlign: "center" }}>Qty</th>
+                <th style={{ width: "120px", textAlign: "right" }}>Unit Price</th>
+                <th style={{ width: "120px", textAlign: "right" }}>Line Total</th>
+                <th style={{ width: "50px", textAlign: "right" }}></th>
               </tr>
             </thead>
             <tbody>
               {selectedParts.map((part) => (
                 <tr key={part.itemId}>
-                  <td>{part.itemName}</td>
-                  <td>{part.quantity}</td>
-                  <td>${part.unitPrice.toFixed(2)}</td>
-                  <td>${(part.quantity * part.unitPrice).toFixed(2)}</td>
-                  <td>
-                    <button onClick={() => handleRemovePart(part.itemId)} className={styles.removeBtn}>
-                      <Trash2 size={16} />
+                  <td style={{ fontWeight: 600 }}>{part.itemName}</td>
+                  <td style={{ textAlign: "center" }} className={styles.mono}>{part.quantity}</td>
+                  <td style={{ textAlign: "right" }} className={styles.mono}>${part.unitPrice.toFixed(2)}</td>
+                  <td style={{ textAlign: "right", fontWeight: 700 }} className={styles.mono}>
+                    ${(part.quantity * part.unitPrice).toFixed(2)}
+                  </td>
+                  <td style={{ textAlign: "right" }}>
+                    <button 
+                      onClick={() => handleRemovePart(part.itemId)} 
+                      className={styles.removeBtn}
+                      title="Remove part"
+                    >
+                      <Trash2 size={15} />
                     </button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+        ) : (
+          <div style={{ textAlign: "center", padding: "1.5rem", color: "var(--color-slate-400)", fontSize: "0.85rem", border: "1px dashed #e2e8f0", borderRadius: "var(--radius-lg)", marginBottom: "1.5rem" }}>
+            No parts or fluids added. Add inventory materials using the selector above if applicable.
+          </div>
         )}
 
+        {/* Totals Summary */}
         <div className={styles.totals}>
           <div className={styles.totalRow}>
-            <span>Parts Total:</span>
-            <span>${partsTotal.toFixed(2)}</span>
+            <span>Parts & Fluids Total:</span>
+            <span className={styles.mono}>${partsTotal.toFixed(2)}</span>
           </div>
+
           <div className={styles.totalRow}>
-            <span>Service Labor Fee:</span>
+            <span>Service & Labor Fee:</span>
             <input 
               type="number" 
               value={serviceFee} 
               onChange={(e) => setServiceFee(Number(e.target.value))}
-              className={styles.input}
-              style={{ width: "120px", textAlign: "right" }}
+              className={styles.laborInput}
+              aria-label="Service & Labor Fee"
             />
           </div>
+
           <div className={styles.grandTotal}>
-            <span>Total Amount Due:</span>
-            <span>${grandTotal.toFixed(2)}</span>
+            <span>Amount Due:</span>
+            <span className={styles.grandTotalValue}>${grandTotal.toFixed(2)}</span>
           </div>
         </div>
-      </div>
 
-      <div className={styles.actions}>
-        <button onClick={handleDownloadPdf} className={`${styles.btn} ${styles.downloadBtn}`}>
-          <Download size={20} /> Download PDF
-        </button>
-        <button onClick={handlePayment} disabled={isPending} className={`${styles.btn} ${styles.payBtn}`}>
-          {isPending ? <Loader2 className="animate-spin" /> : <CheckCircle size={20} />}
-          Confirm & Collect
-        </button>
+        {/* Action Controls */}
+        <div className={styles.actions}>
+          <button onClick={handleDownloadPdf} className={`${styles.btn} ${styles.downloadBtn}`}>
+            <Download size={18} />
+            <span>Download PDF Receipt</span>
+          </button>
+          
+          <button 
+            onClick={handlePayment} 
+            disabled={isPending} 
+            className={`${styles.btn} ${styles.payBtn}`}
+          >
+            {isPending ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle size={18} />}
+            <span>Confirm Handover & Payment</span>
+          </button>
+        </div>
       </div>
     </div>
   );

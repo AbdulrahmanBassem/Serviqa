@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, Loader2, AlertCircle } from "lucide-react";
+import { X, Loader2, AlertCircle, Wrench } from "lucide-react";
 import { useCreateJob, useUpdateJob } from "../api/jobHooks";
 import { useClients } from "../../clients/api/clientHooks";
 import { useVehicles } from "../../vehicles/api/vehicleHooks";
@@ -10,16 +10,20 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   job?: Job | null;
+  initialClientId?: string;
+  initialVehicleId?: string;
+  initialStatus?: Job["status"];
 }
 
-export const JobModal = ({ isOpen, onClose, job }: Props) => {
+export const JobModal = ({ isOpen, onClose, job, initialClientId, initialVehicleId, initialStatus }: Props) => {
   const createMutation = useCreateJob();
   const updateMutation = useUpdateJob();
   
   const { data: clients } = useClients();
   const { data: vehicles } = useVehicles();
   
-  const [selectedClientId, setSelectedClientId] = useState<string>(job?.clientId ?? "");
+  const [selectedClientId, setSelectedClientId] = useState<string>(job?.clientId ?? initialClientId ?? "");
+  const [selectedVehicleId, setSelectedVehicleId] = useState<string>(job?.vehicleId ?? initialVehicleId ?? "");
 
   const isEditing = !!job;
   const isPending = createMutation.isPending || updateMutation.isPending;
@@ -58,12 +62,24 @@ export const JobModal = ({ isOpen, onClose, job }: Props) => {
     <div className={styles.overlay}>
       <div className={styles.modal}>
         <div className={styles.header}>
-          <h2 className={styles.title}>{isEditing ? "Edit Job" : "Create New Job"}</h2>
-          <button onClick={onClose} className={styles.closeBtn}><X size={20} /></button>
+          <div className={styles.headerTitleGroup}>
+            <div className={styles.headerIconBadge}>
+              <Wrench size={22} />
+            </div>
+            <div className={styles.titleArea}>
+              <h2 className={styles.title}>{isEditing ? "Edit Repair Order" : "New Repair Order"}</h2>
+              <span className={styles.subtitle}>
+                {isEditing ? "Update diagnostic scope, cost estimate, and status" : "Dispatch service ticket to workshop floor"}
+              </span>
+            </div>
+          </div>
+          <button onClick={onClose} className={styles.closeBtn} title="Close modal" aria-label="Close modal">
+            <X size={18} />
+          </button>
         </div>
         
         {error && (
-          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", backgroundColor: "#fef2f2", color: "var(--color-danger)", padding: "0.75rem", borderRadius: "var(--radius-md)", marginBottom: "1rem" }}>
+          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", backgroundColor: "#fef2f2", color: "var(--color-danger)", padding: "0.75rem 1rem", borderRadius: "var(--radius-lg)", marginBottom: "1.25rem", border: "1px solid #fecaca", fontSize: "var(--text-sm)" }}>
             <AlertCircle size={16} /><span>{error.message}</span>
           </div>
         )}
@@ -71,7 +87,14 @@ export const JobModal = ({ isOpen, onClose, job }: Props) => {
         <form key={job?.id || "new"} onSubmit={handleSubmit}>
           <div className={styles.formGroup}>
             <label htmlFor="clientId" className={styles.label}>Client *</label>
-            <select id="clientId" name="clientId" required value={selectedClientId} onChange={(e) => setSelectedClientId(e.target.value)} className={styles.input}>
+            <select 
+              id="clientId" 
+              name="clientId" 
+              required 
+              value={selectedClientId} 
+              onChange={(e) => setSelectedClientId(e.target.value)} 
+              className={styles.input}
+            >
               <option value="" disabled>Select a client...</option>
               {clients?.map(client => (
                 <option key={client.id} value={client.id}>{client.fullName}</option>
@@ -81,7 +104,15 @@ export const JobModal = ({ isOpen, onClose, job }: Props) => {
           
           <div className={styles.formGroup}>
             <label htmlFor="vehicleId" className={styles.label}>Vehicle *</label>
-            <select id="vehicleId" name="vehicleId" required defaultValue={job?.vehicleId || ""} disabled={!selectedClientId} className={styles.input}>
+            <select 
+              id="vehicleId" 
+              name="vehicleId" 
+              required 
+              value={selectedVehicleId} 
+              onChange={(e) => setSelectedVehicleId(e.target.value)} 
+              disabled={!selectedClientId} 
+              className={styles.input}
+            >
               <option value="" disabled>Select a vehicle...</option>
               {filteredVehicles.map(vehicle => (
                 <option key={vehicle.id} value={vehicle.id}>{vehicle.make} {vehicle.model} ({vehicle.plateNumber})</option>
@@ -91,27 +122,58 @@ export const JobModal = ({ isOpen, onClose, job }: Props) => {
 
           <div className={styles.formGroup}>
             <label htmlFor="title" className={styles.label}>Job Title *</label>
-            <input name="title" type="text" required defaultValue={job?.title} className={styles.input} placeholder="e.g. Brake Pad Replacement" />
+            <input 
+              id="title"
+              name="title" 
+              type="text" 
+              required 
+              defaultValue={job?.title} 
+              className={styles.input} 
+              placeholder="e.g. Brake Pad Replacement & Rotor Resurface" 
+            />
+          </div>
+
+          <div className={styles.row}>
+            <div className={styles.formGroup}>
+              <label htmlFor="status" className={styles.label}>Initial Status *</label>
+              <select 
+                id="status" 
+                name="status" 
+                required 
+                defaultValue={job?.status || initialStatus || "todo"} 
+                className={styles.input}
+              >
+                <option value="todo">To Do</option>
+                <option value="in-progress">In Progress</option>
+                <option value="waiting-parts">Waiting on Parts</option>
+                <option value="done">Done</option>
+              </select>
+            </div>
+
+            <div className={styles.formGroup}>
+              <label htmlFor="estimatedCost" className={styles.label}>Estimated Cost ($)</label>
+              <input 
+                id="estimatedCost"
+                name="estimatedCost" 
+                type="number" 
+                step="0.01" 
+                defaultValue={job?.estimatedCost} 
+                className={styles.input} 
+                placeholder="0.00"
+              />
+            </div>
           </div>
 
           <div className={styles.formGroup}>
-            <label htmlFor="status" className={styles.label}>Initial Status *</label>
-            <select id="status" name="status" required defaultValue={job?.status || "todo"} className={styles.input}>
-              <option value="todo">To Do</option>
-              <option value="in-progress">In Progress</option>
-              <option value="waiting-parts">Waiting on Parts</option>
-              <option value="done">Done</option>
-            </select>
-          </div>
-
-          <div className={styles.formGroup}>
-            <label className={styles.label}>Estimated Cost ($)</label>
-            <input name="estimatedCost" type="number" step="0.01" defaultValue={job?.estimatedCost} className={styles.input} />
-          </div>
-
-          <div className={styles.formGroup}>
-            <label className={styles.label}>Mechanic Notes</label>
-            <textarea name="description" rows={3} defaultValue={job?.description} className={styles.input} />
+            <label htmlFor="description" className={styles.label}>Mechanic Diagnostic Notes</label>
+            <textarea 
+              id="description"
+              name="description" 
+              rows={3} 
+              defaultValue={job?.description} 
+              className={styles.input} 
+              placeholder="Symptoms reported, diagnostic DTCs, parts required..."
+            />
           </div>
 
           <div className={styles.footer}>
